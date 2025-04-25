@@ -5,7 +5,7 @@ import LineChart from '../components/LineChart';
 import PieChart from '../components/PieChart';
 
 const Dashboard: React.FC = () => {
-  const { transactions, targets, summary } = useFinance();
+  const { transactions, summary } = useFinance();
   const [selectedPeriod, setSelectedPeriod] = useState<'day' | 'week' | 'month' | 'year'>('month');
   
   // Generate dummy chart data for demonstration
