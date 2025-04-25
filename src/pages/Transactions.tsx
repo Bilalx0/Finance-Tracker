@@ -92,11 +92,11 @@ const Transactions: React.FC = () => {
   const balance = incomeTotal - expenseTotal;
 
   return (
-    <div className="flex-1 overflow-y-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Transactions</h1>
+    <div className="flex-1 overflow-y-auto p-3 sm:p-6">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-0">Transactions</h1>
         <button 
-          className="btn btn-primary"
+          className="btn btn-primary w-full sm:w-auto"
           onClick={() => setShowForm(!showForm)}
         >
           {showForm ? 'Cancel' : 'Add Transaction'}
@@ -105,11 +105,11 @@ const Transactions: React.FC = () => {
       
       {/* Transaction Entry Form */}
       {showForm && (
-        <div className="card mb-6">
+        <div className="card mb-4 sm:mb-6">
           <h2 className="text-lg font-semibold mb-4">Add New Transaction</h2>
           
           <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-1">
                   Type
@@ -118,7 +118,7 @@ const Transactions: React.FC = () => {
                   name="type"
                   value={newTransaction.type}
                   onChange={handleTypeChange}
-                  className="select bg-dark"
+                  className="select bg-dark w-full"
                 >
                   <option value="income">Income</option>
                   <option value="expense">Expense</option>
@@ -135,7 +135,7 @@ const Transactions: React.FC = () => {
                   value={newTransaction.amount || ''}
                   onChange={handleInputChange}
                   placeholder="0.00"
-                  className="input bg-dark"
+                  className="input bg-dark w-full"
                   min="0"
                   step="0.01"
                   required
@@ -150,7 +150,7 @@ const Transactions: React.FC = () => {
                   name="category"
                   value={newTransaction.category}
                   onChange={handleCategoryChange}
-                  className="select bg-dark"
+                  className="select bg-dark w-full"
                 >
                   {newTransaction.type === 'income' ? (
                     Object.keys(IncomeCategories).map(category => (
@@ -177,12 +177,12 @@ const Transactions: React.FC = () => {
                   name="date"
                   value={newTransaction.date}
                   onChange={handleInputChange}
-                  className="input bg-dark"
+                  className="input bg-dark w-full"
                   required
                 />
               </div>
               
-              <div className="md:col-span-2">
+              <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-gray-400 mb-1">
                   Description
                 </label>
@@ -192,7 +192,7 @@ const Transactions: React.FC = () => {
                   value={newTransaction.description}
                   onChange={handleInputChange}
                   placeholder="Description (optional)"
-                  className="input bg-dark"
+                  className="input bg-dark w-full"
                 />
               </div>
             </div>
@@ -207,36 +207,36 @@ const Transactions: React.FC = () => {
       )}
       
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 mb-4 sm:mb-6">
         <div className="card bg-gradient-to-br from-green-500/20 to-blue-500/20">
           <h3 className="text-sm text-gray-300 mb-1">Income</h3>
-          <p className="text-2xl font-bold text-green-500">+${incomeTotal.toLocaleString()}</p>
+          <p className="text-xl sm:text-2xl font-bold text-green-500">+${incomeTotal.toLocaleString()}</p>
         </div>
         
         <div className="card bg-gradient-to-br from-red-500/20 to-orange-500/20">
           <h3 className="text-sm text-gray-300 mb-1">Expenses</h3>
-          <p className="text-2xl font-bold text-red-500">-${expenseTotal.toLocaleString()}</p>
+          <p className="text-xl sm:text-2xl font-bold text-red-500">-${expenseTotal.toLocaleString()}</p>
         </div>
         
         <div className="card bg-gradient-to-br from-blue-500/20 to-purple-500/20">
           <h3 className="text-sm text-gray-300 mb-1">Balance</h3>
-          <p className={`text-2xl font-bold ${balance >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+          <p className={`text-xl sm:text-2xl font-bold ${balance >= 0 ? 'text-green-500' : 'text-red-500'}`}>
             ${balance.toLocaleString()}
           </p>
         </div>
       </div>
       
       {/* Filters and Sorting */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 bg-dark-light rounded-lg p-4">
-        <div className="flex space-x-4 mb-4 md:mb-0">
-          <div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 bg-dark-light rounded-lg p-3 sm:p-4">
+        <div className="flex flex-wrap w-full md:w-auto gap-3 mb-3 md:mb-0">
+          <div className="w-full sm:w-auto">
             <label className="block text-sm font-medium text-gray-400 mb-1">
               Filter By
             </label>
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value as 'all' | 'income' | 'expense')}
-              className="select bg-dark py-1 px-3 text-sm"
+              className="select bg-dark py-1 px-3 text-sm w-full sm:w-auto"
             >
               <option value="all">All</option>
               <option value="income">Income</option>
@@ -244,28 +244,28 @@ const Transactions: React.FC = () => {
             </select>
           </div>
           
-          <div>
+          <div className="w-1/2 sm:w-auto">
             <label className="block text-sm font-medium text-gray-400 mb-1">
               Sort By
             </label>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as 'date' | 'amount')}
-              className="select bg-dark py-1 px-3 text-sm"
+              className="select bg-dark py-1 px-3 text-sm w-full"
             >
               <option value="date">Date</option>
               <option value="amount">Amount</option>
             </select>
           </div>
           
-          <div>
+          <div className="w-1/2 sm:w-auto">
             <label className="block text-sm font-medium text-gray-400 mb-1">
               Order
             </label>
             <select
               value={sortOrder}
               onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
-              className="select bg-dark py-1 px-3 text-sm"
+              className="select bg-dark py-1 px-3 text-sm w-full"
             >
               <option value="desc">Newest First</option>
               <option value="asc">Oldest First</option>
@@ -273,57 +273,63 @@ const Transactions: React.FC = () => {
           </div>
         </div>
         
-        <div className="text-gray-400">
+        <div className="text-gray-400 text-sm w-full md:w-auto text-center md:text-right">
           Showing {filteredTransactions.length} of {transactions.length} transactions
         </div>
       </div>
       
       {/* Transactions Table */}
-      <div className="card overflow-hidden">
+      <div className="card overflow-hidden p-0 sm:p-4">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead>
-              <tr className="text-left text-gray-400 text-sm">
-                <th className="pb-3 pl-4">Type</th>
-                <th className="pb-3">Category</th>
-                <th className="pb-3">Description</th>
-                <th className="pb-3">Date</th>
-                <th className="pb-3 text-right">Amount</th>
-                <th className="pb-3 text-right pr-4">Actions</th>
+            <thead className="bg-dark-light">
+              <tr className="text-left text-gray-400 text-xs sm:text-sm">
+                <th className="py-2 sm:py-3 pl-3 sm:pl-4">Type</th>
+                <th className="py-2 sm:py-3 hidden xs:table-cell">Category</th>
+                <th className="py-2 sm:py-3 hidden sm:table-cell">Description</th>
+                <th className="py-2 sm:py-3 hidden md:table-cell">Date</th>
+                <th className="py-2 sm:py-3 text-right">Amount</th>
+                <th className="py-2 sm:py-3 text-right pr-3 sm:pr-4 w-10">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredTransactions.length > 0 ? (
                 filteredTransactions.map(transaction => (
                   <tr key={transaction.id} className="border-t border-gray-800 hover:bg-dark">
-                    <td className="py-3 pl-4">
+                    <td className="py-2 sm:py-3 pl-3 sm:pl-4">
                       <div className="flex items-center">
-                        <div className={`w-8 h-8 rounded-full ${transaction.type === 'income' ? 'bg-green-500 bg-opacity-20' : 'bg-red-500 bg-opacity-20'} flex items-center justify-center mr-2`}>
+                        <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full ${transaction.type === 'income' ? 'bg-green-500 bg-opacity-20' : 'bg-red-500 bg-opacity-20'} flex items-center justify-center mr-2`}>
                           {transaction.type === 'income' ? (
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
                             </svg>
                           ) : (
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                             </svg>
                           )}
                         </div>
-                        <span className="font-medium capitalize">{transaction.type}</span>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-xs sm:text-sm capitalize">{transaction.type}</span>
+                          <span className="text-xs text-gray-500 xs:hidden">{transaction.category}</span>
+                          <span className="text-xs text-gray-500 sm:hidden block xs:hidden">{transaction.description || '-'}</span>
+                          <span className="text-xs text-gray-500 md:hidden block sm:hidden">{new Date(transaction.date).toLocaleDateString()}</span>
+                        </div>
                       </div>
                     </td>
-                    <td className="py-3">{transaction.category}</td>
-                    <td className="py-3 max-w-xs truncate">{transaction.description || '-'}</td>
-                    <td className="py-3">{new Date(transaction.date).toLocaleDateString()}</td>
-                    <td className={`py-3 text-right font-medium ${transaction.type === 'income' ? 'text-green-500' : 'text-red-500'}`}>
+                    <td className="py-2 sm:py-3 hidden xs:table-cell text-xs sm:text-sm">{transaction.category}</td>
+                    <td className="py-2 sm:py-3 max-w-xs truncate hidden sm:table-cell text-xs sm:text-sm">{transaction.description || '-'}</td>
+                    <td className="py-2 sm:py-3 hidden md:table-cell text-xs sm:text-sm">{new Date(transaction.date).toLocaleDateString()}</td>
+                    <td className={`py-2 sm:py-3 text-right font-medium text-xs sm:text-sm ${transaction.type === 'income' ? 'text-green-500' : 'text-red-500'}`}>
                       {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toLocaleString()}
                     </td>
-                    <td className="py-3 text-right pr-4">
+                    <td className="py-2 sm:py-3 text-right pr-3 sm:pr-4">
                       <button
                         onClick={() => deleteTransaction(transaction.id)}
                         className="text-gray-400 hover:text-red-500 transition-colors"
+                        aria-label="Delete transaction"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
                       </button>

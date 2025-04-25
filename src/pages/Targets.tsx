@@ -115,11 +115,11 @@ const Targets: React.FC = () => {
   };
   
   return (
-    <div className="flex-1 overflow-y-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Financial Targets</h1>
+    <div className="flex-1 overflow-y-auto p-3 sm:p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-0">Financial Targets</h1>
         <button 
-          className="btn btn-primary"
+          className="btn btn-primary w-full sm:w-auto"
           onClick={() => {
             setEditingTarget(null);
             setNewTarget({ name: '', amount: 0 });
@@ -132,7 +132,7 @@ const Targets: React.FC = () => {
       
       {/* Target Entry Form */}
       {showForm && (
-        <div className="card mb-6">
+        <div className="card mb-4 sm:mb-6">
           <h2 className="text-lg font-semibold mb-4">
             {editingTarget ? 'Edit Target' : 'Add New Target'}
           </h2>
@@ -149,7 +149,7 @@ const Targets: React.FC = () => {
                   value={newTarget.name}
                   onChange={handleInputChange}
                   placeholder="e.g., Interest Earnings, Monthly Expenses"
-                  className="input bg-dark"
+                  className="input bg-dark w-full"
                   required
                 />
               </div>
@@ -164,7 +164,7 @@ const Targets: React.FC = () => {
                   value={newTarget.amount || ''}
                   onChange={handleInputChange}
                   placeholder="0.00"
-                  className="input bg-dark"
+                  className="input bg-dark w-full"
                   min="1"
                   step="1"
                   required
@@ -194,15 +194,15 @@ const Targets: React.FC = () => {
       )}
       
       {/* Target explanation card */}
-      <div className="card bg-gradient-to-r from-blue-500/10 to-purple-500/10 mb-6">
-        <div className="flex items-start">
-          <div className="bg-blue-500 bg-opacity-20 rounded-lg p-2 mr-4">
+      <div className="card bg-gradient-to-r from-blue-500/10 to-purple-500/10 mb-4 sm:mb-6">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start">
+          <div className="bg-blue-500 bg-opacity-20 rounded-lg p-2 mb-4 sm:mb-0 sm:mr-4">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
           <div>
-            <h3 className="font-semibold mb-1">About Financial Targets</h3>
+            <h3 className="font-semibold mb-1 text-center sm:text-left">About Financial Targets</h3>
             <p className="text-sm text-gray-400">
               Set targets for your income or expenses to help manage your finances. You'll receive warnings when approaching or exceeding these targets.
               For example, set a £1000 interest target to avoid tax implications.
@@ -213,7 +213,7 @@ const Targets: React.FC = () => {
       
       {/* Targets Grid */}
       {targets.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
           {targets.map(target => {
             const currentValue = calculateCurrentValue(target.name);
             const progress = Math.min((currentValue / target.amount) * 100, 100);
@@ -252,8 +252,8 @@ const Targets: React.FC = () => {
                 
                 <div className="mt-4">
                   <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm font-medium">Progress ({progress.toFixed(1)}%)</span>
-                    <span className={`text-sm font-medium ${status.color}`}>{status.label}</span>
+                    <span className="text-xs sm:text-sm font-medium">Progress ({progress.toFixed(1)}%)</span>
+                    <span className={`text-xs sm:text-sm font-medium ${status.color}`}>{status.label}</span>
                   </div>
                   <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
                     <div
@@ -265,15 +265,15 @@ const Targets: React.FC = () => {
                 
                 <div className="mt-4 flex justify-between items-center">
                   <div>
-                    <span className="text-sm text-gray-400">Current</span>
-                    <p className={`font-semibold ${isTargetExceeded(target) ? 'text-red-500' : 'text-white'}`}>
+                    <span className="text-xs sm:text-sm text-gray-400">Current</span>
+                    <p className={`font-semibold text-sm sm:text-base ${isTargetExceeded(target) ? 'text-red-500' : 'text-white'}`}>
                       ${currentValue.toLocaleString()}
                     </p>
                   </div>
                   
                   <div className="text-right">
-                    <span className="text-sm text-gray-400">Remaining</span>
-                    <p className="font-semibold">
+                    <span className="text-xs sm:text-sm text-gray-400">Remaining</span>
+                    <p className="font-semibold text-sm sm:text-base">
                       ${Math.max(target.amount - currentValue, 0).toLocaleString()}
                     </p>
                   </div>
@@ -283,10 +283,10 @@ const Targets: React.FC = () => {
           })}
         </div>
       ) : (
-        <div className="card text-center p-8">
+        <div className="card text-center p-6 sm:p-8">
           <div className="flex justify-center mb-4">
             <div className="bg-dark p-3 rounded-full">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 sm:h-12 w-8 sm:w-12 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>

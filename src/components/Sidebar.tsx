@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 const months = [
@@ -9,48 +9,76 @@ const months = [
 const Sidebar: React.FC = () => {
   const location = useLocation();
   const currentPath = location.pathname;
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   
   return (
-    <aside className="bg-dark w-20 flex flex-col h-screen border-r border-gray-800">
-      <div className="p-4 flex justify-center border-b border-gray-800">
-        <div className="w-10 h-10 bg-dark/light rounded-full flex items-center justify-center">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    <>
+      {/* Mobile toggle button - visible on small screens */}
+      <button 
+        className="lg:hidden fixed bottom-4 left-4 z-50 bg-primary text-white p-3 rounded-full shadow-lg"
+        onClick={() => setIsMobileOpen(!isMobileOpen)}
+      >
+        {isMobileOpen ? (
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
-        </div>
-      </div>
-      
-      <div className="p-2 text-center">
-        <p className="text-sm text-text/muted">Month View</p>
-      </div>
-      
-      <div className="flex-1 overflow-y-auto">
-        <div className="py-2">
-          {months.map((month, index) => (
-            <Link
-              key={month}
-              to={`/month/${index + 1}`}
-              className={`flex justify-center py-2 text-sm ${
-                currentPath === `/month/${index + 1}` 
-                  ? 'text-primary font-medium' 
-                  : 'text-text/muted hover:text-text/light'
-              }`}
-            >
-              {month}
-            </Link>
-          ))}
-        </div>
-      </div>
-      
-      <div className="p-4 flex justify-center">
-        <button className="w-10 h-10 bg-dark/light rounded-full flex items-center justify-center">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-text/muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        ) : (
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
           </svg>
-        </button>
-      </div>
-    </aside>
+        )}
+      </button>
+      
+      <aside className={`bg-dark w-20 flex flex-col h-screen border-r border-gray-800 ${isMobileOpen ? 'fixed inset-y-0 left-0 z-40' : 'hidden lg:flex'}`}>
+        <div className="p-4 flex justify-center border-b border-gray-800">
+          <div className="w-10 h-10 bg-dark/light rounded-full flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        </div>
+        
+        <div className="p-2 text-center">
+          <p className="text-sm text-text/muted">Month View</p>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto">
+          <div className="py-2">
+            {months.map((month, index) => (
+              <Link
+                key={month}
+                to={`/month/${index + 1}`}
+                className={`flex justify-center py-2 text-sm ${
+                  currentPath === `/month/${index + 1}` 
+                    ? 'text-primary font-medium' 
+                    : 'text-text/muted hover:text-text/light'
+                }`}
+                onClick={() => setIsMobileOpen(false)}
+              >
+                {month}
+              </Link>
+            ))}
+          </div>
+        </div>
+        
+        <div className="p-4 flex justify-center">
+          <button className="w-10 h-10 bg-dark/light rounded-full flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-text/muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </button>
+        </div>
+      </aside>
+      
+      {/* Mobile sidebar backdrop */}
+      {isMobileOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+          onClick={() => setIsMobileOpen(false)}
+        />
+      )}
+    </>
   );
 };
 

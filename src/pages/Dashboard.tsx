@@ -104,9 +104,9 @@ const Dashboard: React.FC = () => {
     .slice(0, 5);
   
   return (
-    <div className="flex-1 overflow-y-auto p-6">
+    <div className="flex-1 overflow-y-auto p-3 sm:p-6">
       {/* Stats Cards Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-3 sm:mb-6">
         <StatsCard
           title="Total Income"
           value={summary.totalIncome}
@@ -153,30 +153,30 @@ const Dashboard: React.FC = () => {
       </div>
       
       {/* Income and Expense Chart */}
-      <div className="card mb-6">
-        <div className="flex justify-between items-center mb-4">
+      <div className="card mb-3 sm:mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
           <h2 className="text-xl font-semibold">Income & Expenses</h2>
-          <div className="bg-dark rounded-lg flex p-1">
+          <div className="bg-dark rounded-lg flex flex-wrap w-full sm:w-auto">
             <button 
-              className={`px-3 py-1 rounded-md text-sm ${selectedPeriod === 'day' ? 'bg-dark/light' : ''}`}
+              className={`px-3 py-1 rounded-md text-sm flex-1 sm:flex-initial ${selectedPeriod === 'day' ? 'bg-dark/light' : ''}`}
               onClick={() => setSelectedPeriod('day')}
             >
               Day
             </button>
             <button 
-              className={`px-3 py-1 rounded-md text-sm ${selectedPeriod === 'week' ? 'bg-dark/light' : ''}`}
+              className={`px-3 py-1 rounded-md text-sm flex-1 sm:flex-initial ${selectedPeriod === 'week' ? 'bg-dark/light' : ''}`}
               onClick={() => setSelectedPeriod('week')}
             >
               Week
             </button>
             <button 
-              className={`px-3 py-1 rounded-md text-sm ${selectedPeriod === 'month' ? 'bg-dark/light' : ''}`}
+              className={`px-3 py-1 rounded-md text-sm flex-1 sm:flex-initial ${selectedPeriod === 'month' ? 'bg-dark/light' : ''}`}
               onClick={() => setSelectedPeriod('month')}
             >
               Month
             </button>
             <button 
-              className={`px-3 py-1 rounded-md text-sm ${selectedPeriod === 'year' ? 'bg-dark/light' : ''}`}
+              className={`px-3 py-1 rounded-md text-sm flex-1 sm:flex-initial ${selectedPeriod === 'year' ? 'bg-dark/light' : ''}`}
               onClick={() => setSelectedPeriod('year')}
             >
               Year
@@ -188,7 +188,7 @@ const Dashboard: React.FC = () => {
       </div>
       
       {/* Categories and Assets */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 mb-3 sm:mb-6">
         {/* Income Categories */}
         <div className="card">
           <h2 className="text-lg font-semibold mb-4">Income Categories</h2>
@@ -231,7 +231,7 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
           
-          <div className="mt-4 space-y-2">
+          <div className="mt-4 space-y-2 overflow-y-auto max-h-32 pr-1">
             {Object.entries(expenseCategories).map(([category, amount], index) => (
               <div key={category} className="flex justify-between items-center">
                 <div className="flex items-center">
@@ -290,7 +290,7 @@ const Dashboard: React.FC = () => {
               <tr className="text-left text-gray-400 text-sm">
                 <th className="pb-3">Type</th>
                 <th className="pb-3">Category</th>
-                <th className="pb-3">Date</th>
+                <th className="pb-3 hidden sm:table-cell">Date</th>
                 <th className="pb-3 text-right">Amount</th>
               </tr>
             </thead>
@@ -310,11 +310,18 @@ const Dashboard: React.FC = () => {
                           </svg>
                         )}
                       </div>
-                      <span className="font-medium">{transaction.description || transaction.category}</span>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-sm sm:text-base truncate max-w-[100px] sm:max-w-[200px]">
+                          {transaction.description || transaction.category}
+                        </span>
+                        <span className="text-xs text-gray-400 sm:hidden">
+                          {new Date(transaction.date).toLocaleDateString()}
+                        </span>
+                      </div>
                     </div>
                   </td>
-                  <td className="py-3 text-gray-400">{transaction.category}</td>
-                  <td className="py-3 text-gray-400">{new Date(transaction.date).toLocaleDateString()}</td>
+                  <td className="py-3 text-gray-400 text-sm">{transaction.category}</td>
+                  <td className="py-3 text-gray-400 hidden sm:table-cell">{new Date(transaction.date).toLocaleDateString()}</td>
                   <td className={`py-3 text-right font-medium ${transaction.type === 'income' ? 'text-green-500' : 'text-red-500'}`}>
                     {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toLocaleString()}
                   </td>
