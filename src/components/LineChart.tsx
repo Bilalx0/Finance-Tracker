@@ -20,7 +20,7 @@ interface LineChartProps {
   width?: number;
 }
 
-const LineChart: React.FC<LineChartProps> = ({ data, height = 200, width = 400 }) => {
+const LineChart: React.FC<LineChartProps> = ({ data, height = 200 }) => {
   const chartRef = useRef<HTMLCanvasElement | null>(null);
   const chartInstance = useRef<Chart | null>(null);
 

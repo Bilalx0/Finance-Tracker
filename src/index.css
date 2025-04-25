@@ -20,36 +20,3 @@ body {
   display: flex;
 }
 
-@layer components {
-  .card {
-    @apply bg-dark/light rounded-lg shadow-lg p-5;
-  }
-
-  .btn {
-    @apply px-4 py-2 rounded-lg font-medium transition-colors duration-200;
-  }
-  
-  .btn-primary {
-    @apply bg-primary text-white hover:bg-blue-700;
-  }
-
-  .btn-danger {
-    @apply bg-red-600 text-white hover:bg-red-700;
-  }
-
-  .input {
-    @apply w-full p-2 bg-dark border border-gray-700 rounded-md text-text/light focus:outline-none focus:ring-2 focus:ring-primary;
-  }
-
-  .select {
-    @apply w-full p-2 bg-dark border border-gray-700 rounded-md text-text/light focus:outline-none focus:ring-2 focus:ring-primary;
-  }
-  
-  .nav-item {
-    @apply px-4 py-2 rounded-lg hover:bg-dark/light transition-colors duration-200;
-  }
-  
-  .nav-item-active {
-    @apply bg-dark/light;
-  }
-}

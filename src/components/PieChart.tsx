@@ -19,7 +19,7 @@ interface PieChartProps {
   doughnut?: boolean;
 }
 
-const PieChart: React.FC<PieChartProps> = ({ data, height = 200, width = 400, doughnut = true }) => {
+const PieChart: React.FC<PieChartProps> = ({ data, height = 200, doughnut = true }) => {
   const chartRef = useRef<HTMLCanvasElement | null>(null);
   const chartInstance = useRef<Chart | null>(null);
 
