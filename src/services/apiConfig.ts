@@ -17,7 +17,6 @@ const createApiClient = (): AxiosInstance => {
 
   const instance = axios.create(config);
 
-  // Request interceptor to add auth token to every request
   instance.interceptors.request.use(
     (config) => {
       const token = localStorage.getItem('financeTrackerToken');
@@ -28,16 +27,17 @@ const createApiClient = (): AxiosInstance => {
     },
     (error) => Promise.reject(error)
   );
-
-  // Response interceptor to handle common errors
+  
   instance.interceptors.response.use(
     (response) => response,
     (error) => {
-      // Handle 401 Unauthorized errors (e.g., token expired)
       if (error.response && error.response.status === 401) {
-        localStorage.removeItem('financeTrackerToken');
-        localStorage.removeItem('financeTrackerUser');
-        window.location.href = '/login';
+        // Skip redirect if the request has a special header (e.g., during checkAuth)
+        if (error.config.headers['X-Skip-Redirect'] !== 'true') {
+          localStorage.removeItem('financeTrackerToken');
+          localStorage.removeItem('financeTrackerUser');
+          window.location.href = '/login';
+        }
       }
       return Promise.reject(error);
     }
