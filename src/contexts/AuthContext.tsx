@@ -34,66 +34,79 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     error: null
   });
   
-  // Check if the user is already logged in via token
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        // Try to get cached user data for faster loading
-        const cachedUserData = localStorage.getItem(USER_KEY);
-        const cachedUser = cachedUserData ? JSON.parse(cachedUserData) : null;
-        
-        // Set cached user data while we verify with server
-        if (cachedUser) {
-          setState({
-            user: cachedUser,
-            isAuthenticated: true,
-            loading: true,
-            error: null
-          });
-        }
-        
-        // Verify with server
-        const user = await AuthAPI.getCurrentUser();
-        
-        if (user) {
-          // Update local storage with fresh user data
-          localStorage.setItem(USER_KEY, JSON.stringify(user));
-          
-          setState({
-            user,
-            isAuthenticated: true,
-            loading: false,
-            error: null
-          });
-        } else {
-          // Clear local storage if server check fails
-          localStorage.removeItem(USER_KEY);
-          
-          setState({
-            user: null,
-            isAuthenticated: false,
-            loading: false,
-            error: null
-          });
-        }
-      } catch (err) {
-        console.error('Auth check error:', err);
-        
-        // Clear storage on error
-        localStorage.removeItem(USER_KEY);
-        
+  // AuthProvider.tsx
+useEffect(() => {
+  const checkAuth = async () => {
+    try {
+      const cachedUserData = localStorage.getItem(USER_KEY);
+      const cachedUser = cachedUserData ? JSON.parse(cachedUserData) : null;
+      const token = localStorage.getItem(USER_KEY);
+      console.log('Checking auth - Cached user:', cachedUser, 'Token:', token);
+
+      // Use cached user data initially
+      if (cachedUser && token) {
+        setState({
+          user: cachedUser,
+          isAuthenticated: true,
+          loading: true,
+          error: null,
+        });
+      } else {
         setState({
           user: null,
           isAuthenticated: false,
           loading: false,
-          error: 'Session expired'
+          error: null,
+        });
+        return; // Skip server check if no token or user
+      }
+
+      // Verify with server
+      const user = await AuthAPI.getCurrentUser();
+
+      if (user) {
+        localStorage.setItem(USER_KEY, JSON.stringify(user));
+        setState({
+          user,
+          isAuthenticated: true,
+          loading: false,
+          error: null,
+        });
+      } else {
+        console.log('No user returned from server');
+        localStorage.removeItem(USER_KEY);
+        setState({
+          user: null,
+          isAuthenticated: false,
+          loading: false,
+          error: 'Session expired',
         });
       }
-    };
-    
-    checkAuth();
-  }, []);
-  
+    } catch (err) {
+      console.error('Auth check error:', err);
+      // Only clear state if the error indicates an invalid token
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        localStorage.removeItem(USER_KEY);
+        setState({
+          user: null,
+          isAuthenticated: false,
+          loading: false,
+          error: 'Session expired',
+        });
+      } else {
+        // Keep the cached user data if the error is not auth-related (e.g., network issue)
+        setState((prev) => ({
+          ...prev,
+          loading: false,
+          error: null,
+        }));
+      }
+    }
+  };
+
+  checkAuth();
+}, []);
+
   // Login function
   const login = async (email: string, password: string) => {
     try {

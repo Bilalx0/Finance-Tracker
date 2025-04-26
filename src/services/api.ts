@@ -7,8 +7,8 @@ export const AuthAPI = {
   // Register a new user
   register: async (username: string, email: string, password: string): Promise<AuthUser> => {
     try {
-      const response = await apiClient.post('/auth/register', { username, email, password });
-      // Save token
+      const response = await apiClient.post('/signup', { username, email, password });
+      console.log('Signup response:', response.data); // Debug log
       if (response.data.token) {
         localStorage.setItem('financeTrackerToken', response.data.token);
       }
@@ -18,12 +18,11 @@ export const AuthAPI = {
       throw error;
     }
   },
-  
-  // Login user
+
   login: async (email: string, password: string): Promise<AuthUser> => {
     try {
-      const response = await apiClient.post('/auth/login', { email, password });
-      // Save token
+      const response = await apiClient.post('/login', { email, password });
+      console.log('Login response:', response.data); // Debug log
       if (response.data.token) {
         localStorage.setItem('financeTrackerToken', response.data.token);
       }
@@ -37,7 +36,7 @@ export const AuthAPI = {
   // Logout user
   logout: async (): Promise<void> => {
     try {
-      await apiClient.post('/auth/logout');
+      await apiClient.post('/logout');
       localStorage.removeItem('financeTrackerToken');
     } catch (error) {
       console.error('Logout error:', error);
@@ -49,19 +48,20 @@ export const AuthAPI = {
   
   // Get the current user
   getCurrentUser: async (): Promise<AuthUser | null> => {
-    try {
-      const token = localStorage.getItem('financeTrackerToken');
-      if (!token) return null;
-      
-      const response = await apiClient.get('/auth/me');
-      return response.data.user;
-    } catch (error) {
-      console.error('Get current user error:', error);
-      // If the token is invalid, clear it
-      localStorage.removeItem('financeTrackerToken');
-      return null;
-    }
+  try {
+    const token = localStorage.getItem('financeTrackerToken');
+    if (!token) return null;
+
+    const response = await apiClient.get('/protected', {
+      headers: { 'X-Skip-Redirect': 'true' },
+    });
+    return response.data.user;
+  } catch (error) {
+    console.error('Get current user error:', error);
+    localStorage.removeItem('financeTrackerToken');
+    return null;
   }
+},
 };
 
 // Transaction API
