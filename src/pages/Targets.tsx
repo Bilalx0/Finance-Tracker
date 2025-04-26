@@ -6,13 +6,20 @@ const Targets: React.FC = () => {
   const { targets, transactions, addTarget, updateTarget, deleteTarget } = useFinance();
   const [showForm, setShowForm] = useState(false);
   const [editingTarget, setEditingTarget] = useState<Target | null>(null);
-  
+
   // Form state
   const [newTarget, setNewTarget] = useState<Omit<Target, 'id'>>({
     name: '',
     amount: 0
   });
-  
+
+  // Function to open the add target form and reset state
+  const openAddTargetForm = () => {
+    setEditingTarget(null);
+    setNewTarget({ name: '', amount: 0 });
+    setShowForm(true);
+  };
+
   // Calculate current values for targets
   const calculateCurrentValue = (targetName: string) => {
     if (targetName === 'Interest Earnings') {
@@ -30,37 +37,37 @@ const Targets: React.FC = () => {
     }
     return 0;
   };
-  
+
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    
+
     setNewTarget(prev => ({
       ...prev,
       [name]: name === 'amount' ? parseFloat(value) : value
     }));
   };
-  
+
   // Handle form submission for new target
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (editingTarget) {
       updateTarget(editingTarget.id, newTarget);
     } else {
       addTarget(newTarget);
     }
-    
+
     // Reset form
     setNewTarget({
       name: '',
       amount: 0
     });
-    
+
     setEditingTarget(null);
     setShowForm(false);
   };
-  
+
   // Start editing a target
   const handleEdit = (target: Target) => {
     setEditingTarget(target);
@@ -70,23 +77,30 @@ const Targets: React.FC = () => {
     });
     setShowForm(true);
   };
-  
+
+  // Function to handle the cancel button click
+  const handleCancel = () => {
+    setShowForm(false);
+    setEditingTarget(null);
+    setNewTarget({ name: '', amount: 0 });
+  };
+
   // Calculate progress percentage for a target
   const calculateProgress = (target: Target) => {
     const currentValue = calculateCurrentValue(target.name);
     return (currentValue / target.amount) * 100;
   };
-  
+
   // Check if a target is exceeded
   const isTargetExceeded = (target: Target) => {
     const currentValue = calculateCurrentValue(target.name);
     return currentValue > target.amount;
   };
-  
+
   // Get status of a target
   const getTargetStatus = (target: Target) => {
     const progress = calculateProgress(target);
-    
+
     if (progress >= 100) {
       return {
         label: 'Exceeded',
@@ -113,34 +127,30 @@ const Targets: React.FC = () => {
       };
     }
   };
-  
+
   return (
     <div className="flex-1 overflow-y-auto p-3 sm:p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6">
         <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-0">Financial Targets</h1>
-        <button 
+        <button
           className="btn btn-primary w-full sm:w-auto"
-          onClick={() => {
-            setEditingTarget(null);
-            setNewTarget({ name: '', amount: 0 });
-            setShowForm(!showForm);
-          }}
+          onClick={showForm && !editingTarget ? handleCancel : openAddTargetForm}
         >
           {showForm && !editingTarget ? 'Cancel' : 'Add Target'}
         </button>
       </div>
-      
-      {/* Target Entry Form */}
+
+      {/* Target Entry Form */} 
       {showForm && (
         <div className="card mb-4 sm:mb-6">
           <h2 className="text-lg font-semibold mb-4">
             {editingTarget ? 'Edit Target' : 'Add New Target'}
           </h2>
-          
+
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
+                <label className="block text-sm font-medium text-gray-300 mb-1">
                   Target Name
                 </label>
                 <input
@@ -149,13 +159,13 @@ const Targets: React.FC = () => {
                   value={newTarget.name}
                   onChange={handleInputChange}
                   placeholder="e.g., Interest Earnings, Monthly Expenses"
-                  className="input bg-dark w-full"
+                  className="input bg-gray-800 text-white border border-gray-600 w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
+                <label className="block text-sm font-medium text-gray-300 mb-1">
                   Target Amount ($)
                 </label>
                 <input
@@ -164,23 +174,20 @@ const Targets: React.FC = () => {
                   value={newTarget.amount || ''}
                   onChange={handleInputChange}
                   placeholder="0.00"
-                  className="input bg-dark w-full"
+                  className="input bg-gray-800 text-white border border-gray-600 w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   min="1"
                   step="1"
                   required
                 />
               </div>
             </div>
-            
+
             <div className="flex justify-end">
               {editingTarget && (
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="btn bg-gray-700 text-white hover:bg-gray-600 mr-2"
-                  onClick={() => {
-                    setEditingTarget(null);
-                    setShowForm(false);
-                  }}
+                  onClick={handleCancel}
                 >
                   Cancel
                 </button>
@@ -192,7 +199,7 @@ const Targets: React.FC = () => {
           </form>
         </div>
       )}
-      
+
       {/* Target explanation card */}
       <div className="card bg-gradient-to-r from-blue-500/10 to-purple-500/10 mb-4 sm:mb-6">
         <div className="flex flex-col sm:flex-row items-center sm:items-start">
@@ -205,12 +212,12 @@ const Targets: React.FC = () => {
             <h3 className="font-semibold mb-1 text-center sm:text-left">About Financial Targets</h3>
             <p className="text-sm text-gray-400">
               Set targets for your income or expenses to help manage your finances. You'll receive warnings when approaching or exceeding these targets.
-              For example, set a £1000 interest target to avoid tax implications.
+              For example, set a $1000 interest target to avoid tax implications.
             </p>
           </div>
         </div>
       </div>
-      
+
       {/* Targets Grid */}
       {targets.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
@@ -218,7 +225,7 @@ const Targets: React.FC = () => {
             const currentValue = calculateCurrentValue(target.name);
             const progress = Math.min((currentValue / target.amount) * 100, 100);
             const status = getTargetStatus(target);
-            
+
             return (
               <div key={target.id} className="card">
                 <div className="flex justify-between items-start">
@@ -228,7 +235,7 @@ const Targets: React.FC = () => {
                       Target: ${target.amount.toLocaleString()}
                     </p>
                   </div>
-                  
+
                   <div className="flex space-x-2">
                     <button
                       onClick={() => handleEdit(target)}
@@ -238,7 +245,7 @@ const Targets: React.FC = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                       </svg>
                     </button>
-                    
+
                     <button
                       onClick={() => deleteTarget(target.id)}
                       className="text-gray-400 hover:text-red-500 transition-colors"
@@ -249,7 +256,7 @@ const Targets: React.FC = () => {
                     </button>
                   </div>
                 </div>
-                
+
                 <div className="mt-4">
                   <div className="flex justify-between items-center mb-1">
                     <span className="text-xs sm:text-sm font-medium">Progress ({progress.toFixed(1)}%)</span>
@@ -262,7 +269,7 @@ const Targets: React.FC = () => {
                     ></div>
                   </div>
                 </div>
-                
+
                 <div className="mt-4 flex justify-between items-center">
                   <div>
                     <span className="text-xs sm:text-sm text-gray-400">Current</span>
@@ -270,7 +277,7 @@ const Targets: React.FC = () => {
                       ${currentValue.toLocaleString()}
                     </p>
                   </div>
-                  
+
                   <div className="text-right">
                     <span className="text-xs sm:text-sm text-gray-400">Remaining</span>
                     <p className="font-semibold text-sm sm:text-base">
@@ -285,7 +292,7 @@ const Targets: React.FC = () => {
       ) : (
         <div className="card text-center p-6 sm:p-8">
           <div className="flex justify-center mb-4">
-            <div className="bg-dark p-3 rounded-full">
+            <div className="bg-dark p-3 rounded-full cursor-pointer" onClick={openAddTargetForm}>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-8 sm:h-12 w-8 sm:w-12 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -295,9 +302,9 @@ const Targets: React.FC = () => {
           <p className="text-gray-400 mb-4">
             Set financial targets to track your progress and receive alerts.
           </p>
-          <button 
+          <button
             className="btn btn-primary"
-            onClick={() => setShowForm(true)}
+            onClick={openAddTargetForm}
           >
             Create Your First Target
           </button>

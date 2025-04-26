@@ -54,7 +54,7 @@ const Sidebar: React.FC = () => {
     <>
       {/* Mobile toggle button - visible on small screens */}
       <button 
-        className="lg:hidden fixed bottom-4 left-4 z-50 bg-primary text-white p-3 rounded-full shadow-lg"
+        className="lg:hidden fixed top-4 left-4 z-50 bg-primary text-white p-3 rounded-full shadow-lg"
         onClick={() => setIsMobileOpen(!isMobileOpen)}
       >
         {isMobileOpen ? (
