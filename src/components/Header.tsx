@@ -1,30 +1,27 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useFinance } from '../contexts/FinanceContext';
+import { useAuth } from '../contexts/AuthContext';
 
-interface HeaderProps {
-  username?: string;
-  userRole?: string;
-  userAvatar?: string;
-}
-
-const Header: React.FC<HeaderProps> = ({
-  username = 'Simon K. Jimmy',
-  userRole = 'Finance Consultant',
-  userAvatar = 'https://i.pravatar.cc/40?img=68', // Default avatar URL
-}) => {
+const Header: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const currentPath = location.pathname;
-  const { summary } = useFinance();
+  const { summary, currentMonth, currentYear } = useFinance();
+  const { user, logout } = useAuth();
   
   // Get current date
-  const currentDate = new Date();
-  const formattedDate = currentDate.toLocaleDateString('en-US', { 
-    weekday: 'long', 
-    month: 'long', 
-    day: 'numeric', 
-    year: 'numeric' 
-  });
+  const formattedDate = `${currentMonth} ${currentYear}`;
+  
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+  };
   
   return (
     <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center p-4 bg-dark border-b border-gray-800">
@@ -84,11 +81,26 @@ const Header: React.FC<HeaderProps> = ({
         
         <div className="flex items-center space-x-3">
           <div className="text-left sm:text-right">
-            <h3 className="font-medium text-text/light">{username}</h3>
-            <p className="text-sm text-text/muted">{userRole}</p>
+            <h3 className="font-medium text-text/light">{user?.username || 'User'}</h3>
+            <p className="text-sm text-text/muted">{user?.email || 'user@example.com'}</p>
           </div>
-          <div className="w-10 h-10 bg-gradient-to-r from-blue-400 to-accent/purple rounded-full overflow-hidden flex-shrink-0">
-            <img src={userAvatar} alt={username} className="w-full h-full object-cover" />
+          <div className="relative group">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-400 to-accent/purple rounded-full overflow-hidden flex-shrink-0 cursor-pointer">
+              {/* Use the first letter of username as avatar */}
+              <div className="w-full h-full flex items-center justify-center text-white font-bold">
+                {user?.username?.[0]?.toUpperCase() || 'U'}
+              </div>
+            </div>
+            
+            {/* Dropdown menu */}
+            <div className="absolute right-0 mt-2 w-48 bg-dark.light rounded-md shadow-lg py-1 z-10 hidden group-hover:block">
+              <button 
+                onClick={handleLogout}
+                className="w-full text-left block px-4 py-2 text-sm text-gray-300 hover:bg-dark hover:text-white"
+              >
+                Sign out
+              </button>
+            </div>
           </div>
         </div>
       </div>

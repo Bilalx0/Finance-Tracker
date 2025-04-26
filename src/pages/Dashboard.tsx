@@ -1,15 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useFinance } from '../contexts/FinanceContext';
+import { useAuth } from '../contexts/AuthContext';
 import StatsCard from '../components/StatsCard';
 import LineChart from '../components/LineChart';
 import PieChart from '../components/PieChart';
 import TransactionModal from '../components/TransactionModal';
 
 const Dashboard: React.FC = () => {
-  const { transactions, summary } = useFinance();
+  const { transactions, summary, currentMonth, currentYear, isMonthLocked, setMonth } = useFinance();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { id: monthId } = useParams<{ id?: string }>();
+  
   const [selectedPeriod, setSelectedPeriod] = useState<'day' | 'week' | 'month' | 'year'>('month');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState<'income' | 'expense'>('income');
+  
+  // If a month is specified in the URL, load that month's data
+  useEffect(() => {
+    if (monthId) {
+      const monthIndex = parseInt(monthId) - 1;
+      if (!isNaN(monthIndex) && monthIndex >= 0 && monthIndex <= 11) {
+        setMonth(monthIndex, currentYear);
+      }
+    }
+  }, [monthId, setMonth, currentYear]);
   
   const openIncomeModal = () => {
     setModalType('income');
@@ -24,29 +40,61 @@ const Dashboard: React.FC = () => {
   const closeModal = () => {
     setIsModalOpen(false);
   };
-
-  // Generate dummy chart data for demonstration
-  const lineChartData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-    datasets: [
-      {
-        label: 'Income',
-        data: [12500, 13200, 15000, 14500, 13800, 15200, 16000, 15600, 16200, 16800, 17500, 18000],
-        borderColor: '#10b981', // green
-        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-        fill: true,
-        tension: 0.4
-      },
-      {
-        label: 'Expenses',
-        data: [8500, 9200, 8800, 9500, 9100, 9800, 10200, 9700, 10500, 10200, 10800, 11000],
-        borderColor: '#ef4444', // red
-        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-        fill: true,
-        tension: 0.4
-      }
-    ]
+  
+  // Map full month names to their indices
+  const monthNameToIndex: Record<string, number> = {
+    'January': 0, 'February': 1, 'March': 2, 'April': 3, 
+    'May': 4, 'June': 5, 'July': 6, 'August': 7, 
+    'September': 8, 'October': 9, 'November': 10, 'December': 11
   };
+  
+  // Current month index
+  const currentMonthIndex = monthNameToIndex[currentMonth];
+  
+  // Generate real chart data based on actual transactions
+  const lineChartData = useMemo(() => {
+    // Create arrays for all 12 months with zero values
+    const monthlyIncome = Array(12).fill(0);
+    const monthlyExpenses = Array(12).fill(0);
+    
+    // Group transactions by month and type
+    transactions.forEach(transaction => {
+      const date = new Date(transaction.date);
+      const month = date.getMonth();
+      const year = date.getFullYear();
+      
+      // Only count transactions from the current year
+      if (year === currentYear) {
+        if (transaction.type === 'income') {
+          monthlyIncome[month] += transaction.amount;
+        } else {
+          monthlyExpenses[month] += transaction.amount;
+        }
+      }
+    });
+    
+    return {
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+      datasets: [
+        {
+          label: 'Income',
+          data: monthlyIncome,
+          borderColor: '#10b981', // green
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          fill: true,
+          tension: 0.4
+        },
+        {
+          label: 'Expenses',
+          data: monthlyExpenses,
+          borderColor: '#ef4444', // red
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          fill: true,
+          tension: 0.4
+        }
+      ]
+    };
+  }, [transactions, currentYear]);
   
   // Income by category pie chart
   const incomeCategories = transactions
@@ -122,27 +170,49 @@ const Dashboard: React.FC = () => {
   
   return (
     <div className="flex-1 overflow-y-auto p-3 sm:p-6 relative">
-      {/* Floating action buttons for adding transactions */}
-      <div className="fixed bottom-6 right-6 flex flex-col space-y-4 z-10">
-        <button 
-          onClick={openIncomeModal}
-          className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg hover:bg-green-600 transition-colors"
-          aria-label="Add income"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-        </button>
-        <button 
-          onClick={openExpenseModal}
-          className="w-12 h-12 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
-          aria-label="Add expense"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-          </svg>
-        </button>
+      {/* Month header */}
+      <div className="mb-6 flex flex-wrap items-center justify-between">
+        <h1 className="text-2xl font-bold text-white">
+          {currentMonth} {currentYear}
+          {isMonthLocked(currentMonthIndex, currentYear) && (
+            <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-700 text-gray-300">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              Locked
+            </span>
+          )}
+        </h1>
+        
+        <div className="flex flex-col items-end">
+          <p className="text-sm text-gray-400">Welcome back,</p>
+          <h2 className="text-lg font-medium">{user?.username || 'User'}</h2>
+        </div>
       </div>
+
+      {/* Floating action buttons for adding transactions - only show for unlocked months */}
+      {!isMonthLocked(currentMonthIndex, currentYear) && (
+        <div className="fixed bottom-6 right-6 flex flex-col space-y-4 z-10">
+          <button 
+            onClick={openIncomeModal}
+            className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg hover:bg-green-600 transition-colors"
+            aria-label="Add income"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+          </button>
+          <button 
+            onClick={openExpenseModal}
+            className="w-12 h-12 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
+            aria-label="Add expense"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* Transaction Modal */}
       <TransactionModal 
@@ -385,6 +455,19 @@ const Dashboard: React.FC = () => {
           </table>
         </div>
       </div>
+      
+      {/* Month lock information - display warning for locked months */}
+      {isMonthLocked(currentMonthIndex, currentYear) && (
+        <div className="mt-6 bg-gray-800 bg-opacity-50 rounded-lg p-4 text-center">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mx-auto mb-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          <h3 className="text-lg font-medium text-white">Future Month Locked</h3>
+          <p className="text-gray-400 mt-2">
+            You cannot add transactions to future months. Please select the current month or a past month to add transactions.
+          </p>
+        </div>
+      )}
     </div>
   );
 };

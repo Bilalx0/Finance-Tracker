@@ -8,6 +8,9 @@ export interface Transaction {
   category: string;
   date: string;
   description?: string;
+  userId?: string; // To track which user the transaction belongs to
+  month: number; // Add the month property (0-11 index)
+  year: number;  // Add the year property (full year, e.g., 2025)
 }
 
 // Financial target types
@@ -16,6 +19,7 @@ export interface Target {
   name: string;
   amount: number;
   current?: number;
+  userId?: string; // To track which user the target belongs to
 }
 
 // Dashboard summary data
@@ -24,6 +28,27 @@ export interface DashboardSummary {
   totalExpenses: number;
   availableBalance: number;
   netWorth: number;
+}
+
+// Monthly data structure
+export interface MonthData {
+  transactions: Transaction[];
+  targets: Target[];
+  summary: DashboardSummary;
+}
+
+// User authentication types
+export interface AuthUser {
+  id: string;
+  username: string;
+  email: string;
+}
+
+export interface AuthState {
+  user: AuthUser | null;
+  isAuthenticated: boolean;
+  loading: boolean;
+  error: string | null;
 }
 
 // Chart data types

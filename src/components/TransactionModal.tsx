@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useFinance } from '../contexts/FinanceContext';
+import { useAuth } from '../contexts/AuthContext';
 import { ExpenseCategories, IncomeCategories } from '../types';
 
 interface TransactionModalProps {
@@ -13,7 +14,8 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
   onClose,
   initialType
 }) => {
-  const { addTransaction } = useFinance();
+  const { addTransaction, currentMonth, currentYear } = useFinance();
+  const { user } = useAuth();
   
   const [transaction, setTransaction] = useState({
     type: initialType,
@@ -68,12 +70,29 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
       return;
     }
     
+    // Map month names to their indices
+    const monthNameToIndex: Record<string, number> = {
+      'January': 0, 'February': 1, 'March': 2, 'April': 3, 
+      'May': 4, 'June': 5, 'July': 6, 'August': 7, 
+      'September': 8, 'October': 9, 'November': 10, 'December': 11
+    };
+    
+    // Get month index from transaction date instead of currentMonth
+    // This ensures the transaction is recorded for the correct month based on date
+    const transactionDate = new Date(transaction.date);
+    const transactionMonthIndex = transactionDate.getMonth();
+    const transactionYear = transactionDate.getFullYear();
+    
+    // Add transaction with user ID and month data from the transaction date
     addTransaction({
       type: transaction.type,
       amount: amount,
       category: transaction.category,
       date: transaction.date,
-      description: transaction.description
+      description: transaction.description,
+      userId: user?.id,
+      month: transactionMonthIndex,
+      year: transactionYear
     });
     
     // Reset form and close modal
@@ -105,6 +124,7 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
           <h2 className="text-xl font-semibold">
             {transaction.type === 'income' ? 'Add Income' : 'Add Expense'}
           </h2>
+          <span className="text-sm text-gray-400">{currentMonth} {currentYear}</span>
         </div>
 
         {/* Transaction type selector */}

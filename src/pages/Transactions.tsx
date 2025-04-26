@@ -3,14 +3,14 @@ import { useFinance } from '../contexts/FinanceContext';
 import { ExpenseCategories, IncomeCategories, Transaction } from '../types';
 
 const Transactions: React.FC = () => {
-  const { transactions, addTransaction, deleteTransaction } = useFinance();
+  const { transactions, addTransaction, deleteTransaction, currentMonth, currentYear } = useFinance();
   const [showForm, setShowForm] = useState(false);
   const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [sortBy, setSortBy] = useState<'date' | 'amount'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  
+
   // Form state
-  const [newTransaction, setNewTransaction] = useState<Omit<Transaction, 'id'>>({
+  const [newTransaction, setNewTransaction] = useState<Omit<Transaction, 'id' | 'month' | 'year'>>({
     type: 'income',
     amount: 0,
     category: 'Salary',
@@ -21,7 +21,7 @@ const Transactions: React.FC = () => {
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    
+
     setNewTransaction(prev => ({
       ...prev,
       [name]: name === 'amount' ? parseFloat(value) : value
@@ -40,7 +40,7 @@ const Transactions: React.FC = () => {
   const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const type = e.target.value as 'income' | 'expense';
     const defaultCategory = type === 'income' ? 'Salary' : 'Housing';
-    
+
     setNewTransaction(prev => ({
       ...prev,
       type,
@@ -51,9 +51,17 @@ const Transactions: React.FC = () => {
   // Submit new transaction
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    addTransaction(newTransaction);
-    
+
+    const transactionDate = new Date(newTransaction.date);
+    const transactionMonth = transactionDate.getMonth();
+    const transactionYear = transactionDate.getFullYear();
+
+    addTransaction({
+      ...newTransaction,
+      month: transactionMonth,
+      year: transactionYear,
+    } as Omit<Transaction, 'id'>); // Explicitly cast to the expected type
+
     // Reset form
     setNewTransaction({
       type: 'income',
@@ -62,13 +70,13 @@ const Transactions: React.FC = () => {
       date: new Date().toISOString().split('T')[0],
       description: ''
     });
-    
+
     setShowForm(false);
   };
 
   // Filter and sort transactions
   const filteredTransactions = transactions
-    .filter(transaction => 
+    .filter(transaction =>
       filter === 'all' ? true : transaction.type === filter
     )
     .sort((a, b) => {
@@ -84,11 +92,11 @@ const Transactions: React.FC = () => {
   const incomeTotal = transactions
     .filter(t => t.type === 'income')
     .reduce((sum, t) => sum + t.amount, 0);
-    
+
   const expenseTotal = transactions
     .filter(t => t.type === 'expense')
     .reduce((sum, t) => sum + t.amount, 0);
-    
+
   const balance = incomeTotal - expenseTotal;
 
   return (
