@@ -3,11 +3,28 @@ import { useFinance } from '../contexts/FinanceContext';
 import StatsCard from '../components/StatsCard';
 import LineChart from '../components/LineChart';
 import PieChart from '../components/PieChart';
+import TransactionModal from '../components/TransactionModal';
 
 const Dashboard: React.FC = () => {
   const { transactions, summary } = useFinance();
   const [selectedPeriod, setSelectedPeriod] = useState<'day' | 'week' | 'month' | 'year'>('month');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<'income' | 'expense'>('income');
   
+  const openIncomeModal = () => {
+    setModalType('income');
+    setIsModalOpen(true);
+  };
+
+  const openExpenseModal = () => {
+    setModalType('expense');
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
   // Generate dummy chart data for demonstration
   const lineChartData = {
     labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
@@ -104,7 +121,36 @@ const Dashboard: React.FC = () => {
     .slice(0, 5);
   
   return (
-    <div className="flex-1 overflow-y-auto p-3 sm:p-6">
+    <div className="flex-1 overflow-y-auto p-3 sm:p-6 relative">
+      {/* Floating action buttons for adding transactions */}
+      <div className="fixed bottom-6 right-6 flex flex-col space-y-4 z-10">
+        <button 
+          onClick={openIncomeModal}
+          className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg hover:bg-green-600 transition-colors"
+          aria-label="Add income"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+        </button>
+        <button 
+          onClick={openExpenseModal}
+          className="w-12 h-12 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
+          aria-label="Add expense"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Transaction Modal */}
+      <TransactionModal 
+        isOpen={isModalOpen} 
+        onClose={closeModal} 
+        initialType={modalType}
+      />
+
       {/* Stats Cards Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-3 sm:mb-6">
         <StatsCard
@@ -295,38 +341,46 @@ const Dashboard: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {latestTransactions.map(transaction => (
-                <tr key={transaction.id} className="border-t border-gray-800">
-                  <td className="py-3">
-                    <div className="flex items-center">
-                      <div className={`w-8 h-8 rounded-full ${transaction.type === 'income' ? 'bg-green-500 bg-opacity-20' : 'bg-red-500 bg-opacity-20'} flex items-center justify-center mr-2`}>
-                        {transaction.type === 'income' ? (
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                          </svg>
-                        ) : (
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                          </svg>
-                        )}
+              {latestTransactions.length > 0 ? (
+                latestTransactions.map(transaction => (
+                  <tr key={transaction.id} className="border-t border-gray-800">
+                    <td className="py-3">
+                      <div className="flex items-center">
+                        <div className={`w-8 h-8 rounded-full ${transaction.type === 'income' ? 'bg-green-500 bg-opacity-20' : 'bg-red-500 bg-opacity-20'} flex items-center justify-center mr-2`}>
+                          {transaction.type === 'income' ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                            </svg>
+                          ) : (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                            </svg>
+                          )}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-sm sm:text-base truncate max-w-[100px] sm:max-w-[200px]">
+                            {transaction.description || transaction.category}
+                          </span>
+                          <span className="text-xs text-gray-400 sm:hidden">
+                            {new Date(transaction.date).toLocaleDateString()}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex flex-col">
-                        <span className="font-medium text-sm sm:text-base truncate max-w-[100px] sm:max-w-[200px]">
-                          {transaction.description || transaction.category}
-                        </span>
-                        <span className="text-xs text-gray-400 sm:hidden">
-                          {new Date(transaction.date).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-3 text-gray-400 text-sm">{transaction.category}</td>
-                  <td className="py-3 text-gray-400 hidden sm:table-cell">{new Date(transaction.date).toLocaleDateString()}</td>
-                  <td className={`py-3 text-right font-medium ${transaction.type === 'income' ? 'text-green-500' : 'text-red-500'}`}>
-                    {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toLocaleString()}
+                    </td>
+                    <td className="py-3 text-gray-400 text-sm">{transaction.category}</td>
+                    <td className="py-3 text-gray-400 hidden sm:table-cell">{new Date(transaction.date).toLocaleDateString()}</td>
+                    <td className={`py-3 text-right font-medium ${transaction.type === 'income' ? 'text-green-500' : 'text-red-500'}`}>
+                      {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toLocaleString()}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={4} className="py-4 text-center text-gray-400">
+                    No transactions yet. Add your first transaction!
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
