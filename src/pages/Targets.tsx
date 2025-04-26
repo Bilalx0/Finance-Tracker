@@ -137,38 +137,38 @@ const Targets: React.FC = () => {
             {editingTarget ? 'Edit Target' : 'Add New Target'}
           </h2>
           
-          <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
-                  Target Name
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={newTarget.name}
-                  onChange={handleInputChange}
-                  placeholder="e.g., Interest Earnings, Monthly Expenses"
-                  className="input bg-dark w-full"
-                  required
-                />
+              <label className="block text-sm font-medium text-gray-300 mb-1">
+                Target Name
+              </label>
+              <input
+                type="text"
+                name="name"
+                value={newTarget.name}
+                onChange={handleInputChange}
+                placeholder="e.g., Interest Earnings, Monthly Expenses"
+                className="input bg-gray-800 text-white border border-gray-600 w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
-                  Target Amount ($)
-                </label>
-                <input
-                  type="number"
-                  name="amount"
-                  value={newTarget.amount || ''}
-                  onChange={handleInputChange}
-                  placeholder="0.00"
-                  className="input bg-dark w-full"
-                  min="1"
-                  step="1"
-                  required
-                />
+              <label className="block text-sm font-medium text-gray-300 mb-1">
+                Target Amount ($)
+              </label>
+              <input
+                type="number"
+                name="amount"
+                value={newTarget.amount || ''}
+                onChange={handleInputChange}
+                placeholder="0.00"
+                className="input bg-gray-800 text-white border border-gray-600 w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                min="1"
+                step="1"
+                required
+              />
               </div>
             </div>
             

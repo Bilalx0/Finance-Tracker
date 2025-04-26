@@ -188,7 +188,7 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
                     <option
                       key={category}
                       value={category}
-                      className="bg-dark.light text-gray-400 hover:bg-gray-700 hover:text-white"
+                      className="bg-black text-white hover:bg-gray-700 hover:text-white"
                     >
                       {category}
                     </option>
