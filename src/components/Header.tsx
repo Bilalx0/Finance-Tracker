@@ -35,7 +35,7 @@ const Header: React.FC<HeaderProps> = ({
           <p className="text-2xl sm:text-3xl font-bold text-secondary mt-1">${summary.availableBalance.toLocaleString()}</p>
         </div>
         
-        <nav className="bg-dark/light rounded-lg flex flex-wrap w-full sm:w-auto mt-4 sm:mt-0">
+        <nav className="bg-dark.light rounded-lg flex flex-wrap w-full sm:w-auto mt-4 sm:mt-0">
           <Link 
             to="/dashboard" 
             className={`nav-item px-4 sm:px-6 py-3 flex-1 sm:flex-auto text-center sm:text-left ${currentPath === '/dashboard' ? 'bg-dark bg-opacity-60' : ''}`}

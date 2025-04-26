@@ -158,25 +158,25 @@ const Dashboard: React.FC = () => {
           <h2 className="text-xl font-semibold">Income & Expenses</h2>
           <div className="bg-dark rounded-lg flex flex-wrap w-full sm:w-auto">
             <button 
-              className={`px-3 py-1 rounded-md text-sm flex-1 sm:flex-initial ${selectedPeriod === 'day' ? 'bg-dark/light' : ''}`}
+              className={`px-3 py-1 rounded-md text-sm flex-1 sm:flex-initial ${selectedPeriod === 'day' ? 'bg-dark.light' : ''}`}
               onClick={() => setSelectedPeriod('day')}
             >
               Day
             </button>
             <button 
-              className={`px-3 py-1 rounded-md text-sm flex-1 sm:flex-initial ${selectedPeriod === 'week' ? 'bg-dark/light' : ''}`}
+              className={`px-3 py-1 rounded-md text-sm flex-1 sm:flex-initial ${selectedPeriod === 'week' ? 'bg-dark.light' : ''}`}
               onClick={() => setSelectedPeriod('week')}
             >
               Week
             </button>
             <button 
-              className={`px-3 py-1 rounded-md text-sm flex-1 sm:flex-initial ${selectedPeriod === 'month' ? 'bg-dark/light' : ''}`}
+              className={`px-3 py-1 rounded-md text-sm flex-1 sm:flex-initial ${selectedPeriod === 'month' ? 'bg-dark.light' : ''}`}
               onClick={() => setSelectedPeriod('month')}
             >
               Month
             </button>
             <button 
-              className={`px-3 py-1 rounded-md text-sm flex-1 sm:flex-initial ${selectedPeriod === 'year' ? 'bg-dark/light' : ''}`}
+              className={`px-3 py-1 rounded-md text-sm flex-1 sm:flex-initial ${selectedPeriod === 'year' ? 'bg-dark.light' : ''}`}
               onClick={() => setSelectedPeriod('year')}
             >
               Year

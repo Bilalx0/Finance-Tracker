@@ -227,7 +227,7 @@ const Transactions: React.FC = () => {
       </div>
       
       {/* Filters and Sorting */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 bg-dark-light rounded-lg p-3 sm:p-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 bg-dark.light rounded-lg p-3 sm:p-4">
         <div className="flex flex-wrap w-full md:w-auto gap-3 mb-3 md:mb-0">
           <div className="w-full sm:w-auto">
             <label className="block text-sm font-medium text-gray-400 mb-1">
@@ -282,7 +282,7 @@ const Transactions: React.FC = () => {
       <div className="card overflow-hidden p-0 sm:p-4">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-dark-light">
+            <thead className="bg-dark.light">
               <tr className="text-left text-gray-400 text-xs sm:text-sm">
                 <th className="py-2 sm:py-3 pl-3 sm:pl-4">Type</th>
                 <th className="py-2 sm:py-3 hidden xs:table-cell">Category</th>

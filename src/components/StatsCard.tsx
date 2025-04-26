@@ -16,7 +16,7 @@ const StatsCard: React.FC<StatsCardProps> = ({
   title,
   value,
   icon,
-  color = 'bg-dark/light',
+  color = 'bg-dark.light',
   className = '',
   trend
 }) => {
