@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useFinance } from '../contexts/FinanceContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -8,9 +8,14 @@ const Header: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
-  const { summary } = useFinance();
+  const { summary, currentMonth, currentYear } = useFinance();
   const { user, logout } = useAuth();
 
+  // Debug effect to monitor summary changes
+  useEffect(() => {
+    console.log('Summary updated in Header:', summary);
+    console.log('Current month and year:', currentMonth, currentYear);
+  }, [summary, currentMonth, currentYear]);
 
   const handleLogout = async () => {
     try {
