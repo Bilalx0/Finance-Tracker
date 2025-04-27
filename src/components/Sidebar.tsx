@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 // import { Link, useLocation } from 'react-router-dom'; // Commenting out unused Link import
-import { useLocation } from 'react-router-dom';
+// import { useLocation } from 'react-router-dom';
 import { useFinance } from '../contexts/FinanceContext';
 import MonthSelector from './MonthSelector';
 
