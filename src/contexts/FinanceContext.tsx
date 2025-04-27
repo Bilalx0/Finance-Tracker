@@ -99,7 +99,7 @@ export const FinanceProvider: React.FC<FinanceProviderProps> = ({ children }) =>
       // Get month's transactions and targets
       const [transactionsResponse, targetsResponse] = await Promise.all([
         TransactionAPI.getAll(month, year),
-        TargetAPI.getAll(month, year)
+        TargetAPI.getAll()
       ]);
       
       setTransactions(transactionsResponse);
@@ -203,36 +203,50 @@ export const FinanceProvider: React.FC<FinanceProviderProps> = ({ children }) =>
     
     // Check each target against the transactions
     targets.forEach(target => {
-      const category = target.category;
+      // Calculate relevant transactions total based on target name
+      let categoryTotal = 0;
+      let targetType = 'expense'; // Default for notification coloring
       
-      // Get all transactions for this category
-      const categoryTransactions = transactions.filter(t => 
-        t.type === (target.type || 'expense') && 
-        t.category === category
-      );
-      
-      // Calculate total amount for this category
-      const categoryTotal = categoryTransactions.reduce((sum, t) => sum + t.amount, 0);
+      if (target.name === 'Interest Earnings') {
+        categoryTotal = transactions
+          .filter(t => t.type === 'income' && t.category === 'Interest')
+          .reduce((sum, t) => sum + t.amount, 0);
+        targetType = 'income';
+      } else if (target.name === 'Monthly Income' || target.name.toLowerCase().includes('income')) {
+        categoryTotal = transactions
+          .filter(t => t.type === 'income')
+          .reduce((sum, t) => sum + t.amount, 0);
+        targetType = 'income';
+      } else if (target.name.toLowerCase().includes('expense')) {
+        categoryTotal = transactions
+          .filter(t => t.type === 'expense')
+          .reduce((sum, t) => sum + t.amount, 0);
+      } else {
+        // For other targets, use all transactions (defaulting to expense type)
+        categoryTotal = transactions
+          .filter(t => t.type === 'expense')
+          .reduce((sum, t) => sum + t.amount, 0);
+      }
       
       // Check if target is exceeded
-      if (target.type === 'income' && categoryTotal >= target.amount) {
+      if (targetType === 'income' && categoryTotal >= target.amount) {
         newNotifications.push({
           id: crypto.randomUUID(),
-          message: `Income target for ${category} (${formatCurrency(target.amount)}) has been reached! Current: ${formatCurrency(categoryTotal)}`,
+          message: `Income target for ${target.name} (${formatCurrency(target.amount)}) has been reached! Current: ${formatCurrency(categoryTotal)}`,
           type: 'success',
           read: false
         });
-      } else if (target.type === 'expense' && categoryTotal >= target.amount) {
+      } else if (targetType === 'expense' && categoryTotal >= target.amount) {
         newNotifications.push({
           id: crypto.randomUUID(),
-          message: `Expense limit for ${category} (${formatCurrency(target.amount)}) has been exceeded! Current: ${formatCurrency(categoryTotal)}`,
+          message: `Expense limit for ${target.name} (${formatCurrency(target.amount)}) has been exceeded! Current: ${formatCurrency(categoryTotal)}`,
           type: 'warning',
           read: false
         });
-      } else if (target.type === 'expense' && categoryTotal >= target.amount * 0.9) {
+      } else if (targetType === 'expense' && categoryTotal >= target.amount * 0.9) {
         newNotifications.push({
           id: crypto.randomUUID(),
-          message: `Expense for ${category} (${formatCurrency(categoryTotal)}) is approaching your limit of ${formatCurrency(target.amount)}`,
+          message: `Expense for ${target.name} (${formatCurrency(categoryTotal)}) is approaching your limit of ${formatCurrency(target.amount)}`,
           type: 'info',
           read: false
         });

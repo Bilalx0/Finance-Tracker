@@ -4,7 +4,8 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 
 // Base API configuration
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_APP_URL || 'https://finance-tracker-backend-production-1cb3.up.railway.app/api';
+
 
 // Create axios instance with default config
 const createApiClient = (): AxiosInstance => {

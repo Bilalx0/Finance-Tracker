@@ -17,8 +17,6 @@ export interface Transaction {
 export interface Target {
   id: string;
   name: string;
-  type?: TransactionType; // Added type property matching TransactionType
-  category: string; // Added category property
   amount: number;
   current?: number;
   userId?: string; // To track which user the target belongs to
