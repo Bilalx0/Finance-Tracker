@@ -3,7 +3,9 @@ import { useFinance } from '../contexts/FinanceContext';
 import { ExpenseCategories, IncomeCategories, Transaction } from '../types';
 
 const Transactions: React.FC = () => {
-  const { transactions, addTransaction, deleteTransaction, currentMonth, currentYear } = useFinance();
+  const { transactions, addTransaction, deleteTransaction } = useFinance();
+  // Commenting out unused variables
+  // const { transactions, addTransaction, deleteTransaction, currentMonth, currentYear } = useFinance();
   const [showForm, setShowForm] = useState(false);
   const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [sortBy, setSortBy] = useState<'date' | 'amount'>('date');
