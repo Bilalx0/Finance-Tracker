@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 // Commenting out unused import
 // import { AuthUser, AuthState } from '../types';
 import { AuthState } from '../types';
+import { AuthAPI } from '../services/api'; // Added the missing import
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;

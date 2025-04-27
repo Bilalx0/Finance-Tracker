@@ -18,7 +18,7 @@ const monthNameToIndex: Record<string, number> = {
 };
 
 const Sidebar: React.FC = () => {
-  const location = useLocation();
+  // const location = useLocation();
   // const currentPath = location.pathname; // Commenting out unused variable
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   
