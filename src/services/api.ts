@@ -113,29 +113,27 @@ export const TransactionAPI = {
 
 // Target API
 export const TargetAPI = {
-  // Get all targets for the current user for a specific month
-  getAll: async (month?: number, year?: number): Promise<Target[]> => {
+  getAll: async (): Promise<Target[]> => {
     try {
-      const params = {
-        month: month !== undefined ? month : undefined,
-        year: year !== undefined ? year : undefined
-      };
-      return apiHelpers.get<Target[]>('/targets', params);
+      return apiHelpers.get<Target[]>('/targets');
     } catch (error) {
       console.error('Get targets error:', error);
       throw error;
     }
   },
   
-  // Create a new target
   create: async (target: Omit<Target, 'id'>): Promise<Target> => {
     try {
-      return apiHelpers.post<Target>('/targets', target);
+      return apiHelpers.post<Target>('/targets', {
+        name: target.name,   
+        amount: target.amount 
+      });
     } catch (error) {
       console.error('Create target error:', error);
       throw error;
     }
   },
+
   
   // Update a target
   update: async (id: string, target: Partial<Target>): Promise<Target> => {
