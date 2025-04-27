@@ -10,13 +10,20 @@ const Targets: React.FC = () => {
   // Form state
   const [newTarget, setNewTarget] = useState<Omit<Target, 'id'>>({
     name: '',
-    amount: 0
+    amount: 0,
+    type: 'expense',
+    category: ''
   });
 
   // Function to open the add target form and reset state
   const openAddTargetForm = () => {
     setEditingTarget(null);
-    setNewTarget({ name: '', amount: 0 });
+    setNewTarget({ 
+      name: '', 
+      amount: 0,
+      type: 'expense',
+      category: ''
+    });
     setShowForm(true);
   };
 
@@ -48,6 +55,23 @@ const Targets: React.FC = () => {
     }));
   };
 
+  // Handle select input changes
+  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setNewTarget(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Get available categories based on selected type
+  const getAvailableCategories = () => {
+    const { IncomeCategories, ExpenseCategories } = require('../types');
+    return newTarget.type === 'income' ? 
+      Object.keys(IncomeCategories) : 
+      Object.keys(ExpenseCategories);
+  };
+
   // Handle form submission for new target
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,7 +85,9 @@ const Targets: React.FC = () => {
     // Reset form
     setNewTarget({
       name: '',
-      amount: 0
+      amount: 0,
+      type: 'expense',
+      category: ''
     });
 
     setEditingTarget(null);
@@ -73,7 +99,9 @@ const Targets: React.FC = () => {
     setEditingTarget(target);
     setNewTarget({
       name: target.name,
-      amount: target.amount
+      amount: target.amount,
+      type: target.type || 'expense',
+      category: target.category || ''
     });
     setShowForm(true);
   };
@@ -82,7 +110,12 @@ const Targets: React.FC = () => {
   const handleCancel = () => {
     setShowForm(false);
     setEditingTarget(null);
-    setNewTarget({ name: '', amount: 0 });
+    setNewTarget({ 
+      name: '', 
+      amount: 0,
+      type: 'expense',
+      category: ''
+    });
   };
 
   // Calculate progress percentage for a target
@@ -179,6 +212,41 @@ const Targets: React.FC = () => {
                   step="1"
                   required
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Type
+                </label>
+                <select
+                  name="type"
+                  value={newTarget.type}
+                  onChange={handleSelectChange}
+                  className="input bg-gray-800 text-white border border-gray-600 w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                >
+                  <option value="income">Income</option>
+                  <option value="expense">Expense</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Category
+                </label>
+                <select
+                  name="category"
+                  value={newTarget.category}
+                  onChange={handleSelectChange}
+                  className="input bg-gray-800 text-white border border-gray-600 w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                >
+                  {getAvailableCategories().map(category => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 

@@ -8,10 +8,9 @@ const Header: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
-  const { summary, currentMonth, currentYear } = useFinance();
+  const { summary } = useFinance();
   const { user, logout } = useAuth();
 
-  const formattedDate = `${currentMonth} ${currentYear}`;
 
   const handleLogout = async () => {
     try {
