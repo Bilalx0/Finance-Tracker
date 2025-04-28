@@ -8,14 +8,20 @@ const Header: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
-  const { summary, currentMonth, currentYear } = useFinance();
+  const { transactions, summary, currentMonth, currentYear } = useFinance();
   const { user, logout } = useAuth();
+  
+  // Add local state for balance to ensure updates
+  const [availableBalance, setAvailableBalance] = useState(summary.availableBalance);
 
-  // Debug effect to monitor summary changes
+  // Update balance whenever transactions or summary changes
   useEffect(() => {
     console.log('Summary updated in Header:', summary);
     console.log('Current month and year:', currentMonth, currentYear);
-  }, [summary, currentMonth, currentYear]);
+    
+    // Update local balance state when summary changes
+    setAvailableBalance(summary.availableBalance);
+  }, [summary, transactions, currentMonth, currentYear]);
 
   const handleLogout = async () => {
     try {
@@ -43,7 +49,7 @@ const Header: React.FC = () => {
         <h1 className="text-lg font-semibold text-text/light">Personal Finance Tracker</h1>
         <div className="mt-2">
           <h2 className="text-sm text-text/muted">Available Balance</h2>
-          <p className="text-xl font-bold text-secondary">${summary.availableBalance.toLocaleString()}</p>
+          <p className="text-xl font-bold text-secondary">${availableBalance.toLocaleString()}</p>
         </div>
       </div>
 
@@ -52,7 +58,7 @@ const Header: React.FC = () => {
         <div>
           <h1 className="text-sm text-text/muted">Personal Finance Tracker</h1>
           <h2 className="text-xl sm:text-2xl font-semibold text-text/light mt-1">Available Balance</h2>
-          <p className="text-2xl sm:text-3xl font-bold text-secondary mt-1">${summary.availableBalance.toLocaleString()}</p>
+          <p className="text-2xl sm:text-3xl font-bold text-secondary mt-1">${availableBalance.toLocaleString()}</p>
         </div>
 
         {/* Desktop Navbar */}

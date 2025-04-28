@@ -294,10 +294,13 @@ export const FinanceProvider: React.FC<FinanceProviderProps> = ({ children }) =>
         const updatedTransactions = [...transactions, newTransaction];
         setTransactions(updatedTransactions);
         
-        // Update summary for current month
+        // Update summary for current month - do this IMMEDIATELY
         const updatedSummary = calculateSummaryData(updatedTransactions);
         console.log('Updating summary to:', updatedSummary);
         setSummary(updatedSummary);
+        
+        // Re-check targets for current month
+        checkTargets(updatedTransactions, targets);
       }
       
       // Always update monthly data for the transaction's month
@@ -320,14 +323,6 @@ export const FinanceProvider: React.FC<FinanceProviderProps> = ({ children }) =>
         // Calculate updated summary for this month
         const updatedSummary = calculateSummaryData(updatedTransactions);
         
-        // If this is the current month being displayed, also update main summary state
-        if (monthKey === currentMonthKey) {
-          // Use setTimeout to ensure state updates don't conflict
-          setTimeout(() => {
-            setSummary(updatedSummary);
-          }, 0);
-        }
-        
         return {
           ...prev,
           [monthKey]: {
@@ -337,11 +332,6 @@ export const FinanceProvider: React.FC<FinanceProviderProps> = ({ children }) =>
           }
         };
       });
-      
-      // Check targets for the affected month
-      if (monthKey === currentMonthKey) {
-        checkTargets([...transactions, newTransaction], targets);
-      }
     } catch (err) {
       setError('Failed to add transaction');
       console.error('Error adding transaction:', err);
@@ -386,7 +376,7 @@ export const FinanceProvider: React.FC<FinanceProviderProps> = ({ children }) =>
         const updatedTransactions = transactions.filter(t => t.id !== id);
         setTransactions(updatedTransactions);
         
-        // Update summary for current month
+        // Update summary for current month - do this IMMEDIATELY 
         const updatedSummary = calculateSummaryData(updatedTransactions);
         console.log('Updating summary to:', updatedSummary);
         setSummary(updatedSummary);
@@ -410,14 +400,6 @@ export const FinanceProvider: React.FC<FinanceProviderProps> = ({ children }) =>
         
         // Calculate updated summary for this month
         const updatedSummary = calculateSummaryData(updatedTransactions);
-        
-        // If this is the current month being displayed, also update main summary state
-        if (monthKey === currentMonthKey) {
-          // Use setTimeout to ensure state updates don't conflict
-          setTimeout(() => {
-            setSummary(updatedSummary);
-          }, 0);
-        }
         
         return {
           ...prev,
