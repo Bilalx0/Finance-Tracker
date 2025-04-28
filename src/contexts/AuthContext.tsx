@@ -1,12 +1,15 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { AuthUser, AuthState } from '../types';
-import { AuthAPI } from '../services/api';
+// Commenting out unused import
+// import { AuthUser, AuthState } from '../types';
+import { AuthState } from '../types';
+import { AuthAPI } from '../services/api'; // Added the missing import
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
   signup: (username: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
+  isLoading: boolean; // Added missing property
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -82,7 +85,7 @@ useEffect(() => {
           error: 'Session expired',
         });
       }
-    } catch (err) {
+    } catch (err: any) { // Adding any type to err
       console.error('Auth check error:', err);
       // Only clear state if the error indicates an invalid token
       if (err.response?.status === 401 || err.response?.status === 403) {
@@ -179,7 +182,7 @@ useEffect(() => {
         loading: false,
         error: null
       });
-    } catch (err) {
+    } catch (err: any) { // Adding any type to err
       console.error('Logout error:', err);
       
       // Still clear local storage and state even if API call fails
@@ -204,7 +207,8 @@ useEffect(() => {
     login,
     signup,
     logout,
-    clearError
+    clearError,
+    isLoading: state.loading // Map loading state to isLoading property
   };
   
   return (

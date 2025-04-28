@@ -16,7 +16,10 @@ const Targets: React.FC = () => {
   // Function to open the add target form and reset state
   const openAddTargetForm = () => {
     setEditingTarget(null);
-    setNewTarget({ name: '', amount: 0 });
+    setNewTarget({ 
+      name: '', 
+      amount: 0
+    });
     setShowForm(true);
   };
 
@@ -82,7 +85,10 @@ const Targets: React.FC = () => {
   const handleCancel = () => {
     setShowForm(false);
     setEditingTarget(null);
-    setNewTarget({ name: '', amount: 0 });
+    setNewTarget({ 
+      name: '', 
+      amount: 0
+    });
   };
 
   // Calculate progress percentage for a target
@@ -211,7 +217,7 @@ const Targets: React.FC = () => {
           <div>
             <h3 className="font-semibold mb-1 text-center sm:text-left">About Financial Targets</h3>
             <p className="text-sm text-gray-400">
-              Set targets for your income or expenses to help manage your finances. You'll receive warnings when approaching or exceeding these targets.
+              Set targets for your finances to help manage your money. You'll receive warnings when approaching or exceeding these targets.
               For example, set a $1000 interest target to avoid tax implications.
             </p>
           </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useFinance } from '../contexts/FinanceContext';
 import { useAuth } from '../contexts/AuthContext';
 import StatsCard from '../components/StatsCard';
@@ -10,7 +10,7 @@ import TransactionModal from '../components/TransactionModal';
 const Dashboard: React.FC = () => {
   const { transactions, summary, currentMonth, currentYear, isMonthLocked, setMonth } = useFinance();
   const { user } = useAuth();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const { id: monthId } = useParams<{ id?: string }>();
   
   const [selectedPeriod, setSelectedPeriod] = useState<'day' | 'week' | 'month' | 'year'>('month');

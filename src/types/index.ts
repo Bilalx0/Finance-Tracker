@@ -20,6 +20,8 @@ export interface Target {
   amount: number;
   current?: number;
   userId?: string; // To track which user the target belongs to
+  month?: number; // Added month for consistency with transactions
+  year?: number;  // Added year for consistency with transactions
 }
 
 // Dashboard summary data

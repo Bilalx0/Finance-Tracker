@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+// import { Link, useLocation } from 'react-router-dom'; // Commenting out unused Link import
+// import { useLocation } from 'react-router-dom';
 import { useFinance } from '../contexts/FinanceContext';
 import MonthSelector from './MonthSelector';
 
@@ -17,8 +18,8 @@ const monthNameToIndex: Record<string, number> = {
 };
 
 const Sidebar: React.FC = () => {
-  const location = useLocation();
-  const currentPath = location.pathname;
+  // const location = useLocation();
+  // const currentPath = location.pathname; // Commenting out unused variable
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   
   const { 

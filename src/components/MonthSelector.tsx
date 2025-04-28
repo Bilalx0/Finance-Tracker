@@ -11,7 +11,7 @@ const MonthSelector: React.FC = () => {
   ];
   
   // Current date for comparison
-  const now = new Date();
+  // const now = new Date(); // Commenting out unused variable
   const currentMonthIndex = months.indexOf(currentMonth);
   
   // Previous and next month

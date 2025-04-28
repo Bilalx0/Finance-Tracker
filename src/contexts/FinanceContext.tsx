@@ -99,7 +99,7 @@ export const FinanceProvider: React.FC<FinanceProviderProps> = ({ children }) =>
       // Get month's transactions and targets
       const [transactionsResponse, targetsResponse] = await Promise.all([
         TransactionAPI.getAll(month, year),
-        TargetAPI.getAll(month, year)
+        TargetAPI.getAll()
       ]);
       
       setTransactions(transactionsResponse);
@@ -203,36 +203,50 @@ export const FinanceProvider: React.FC<FinanceProviderProps> = ({ children }) =>
     
     // Check each target against the transactions
     targets.forEach(target => {
-      const category = target.category;
+      // Calculate relevant transactions total based on target name
+      let categoryTotal = 0;
+      let targetType = 'expense'; // Default for notification coloring
       
-      // Get all transactions for this category
-      const categoryTransactions = transactions.filter(t => 
-        t.type === (target.type || 'expense') && 
-        t.category === category
-      );
-      
-      // Calculate total amount for this category
-      const categoryTotal = categoryTransactions.reduce((sum, t) => sum + t.amount, 0);
+      if (target.name === 'Interest Earnings') {
+        categoryTotal = transactions
+          .filter(t => t.type === 'income' && t.category === 'Interest')
+          .reduce((sum, t) => sum + t.amount, 0);
+        targetType = 'income';
+      } else if (target.name === 'Monthly Income' || target.name.toLowerCase().includes('income')) {
+        categoryTotal = transactions
+          .filter(t => t.type === 'income')
+          .reduce((sum, t) => sum + t.amount, 0);
+        targetType = 'income';
+      } else if (target.name.toLowerCase().includes('expense')) {
+        categoryTotal = transactions
+          .filter(t => t.type === 'expense')
+          .reduce((sum, t) => sum + t.amount, 0);
+      } else {
+        // For other targets, use all transactions (defaulting to expense type)
+        categoryTotal = transactions
+          .filter(t => t.type === 'expense')
+          .reduce((sum, t) => sum + t.amount, 0);
+      }
       
       // Check if target is exceeded
-      if (target.type === 'income' && categoryTotal >= target.amount) {
+      if (targetType === 'income' && categoryTotal >= target.amount) {
         newNotifications.push({
           id: crypto.randomUUID(),
-          message: `Income target for ${category} (${formatCurrency(target.amount)}) has been reached! Current: ${formatCurrency(categoryTotal)}`,
+          message: `Income target for ${target.name} (${formatCurrency(target.amount)}) has been reached! Current: ${formatCurrency(categoryTotal)}`,
           type: 'success',
           read: false
         });
-      } else if (target.type === 'expense' && categoryTotal >= target.amount) {
+      } else if (targetType === 'expense' && categoryTotal >= target.amount) {
         newNotifications.push({
           id: crypto.randomUUID(),
-          message: `Expense limit for ${category} (${formatCurrency(target.amount)}) has been exceeded! Current: ${formatCurrency(categoryTotal)}`,
+          message: `Expense limit for ${target.name} (${formatCurrency(target.amount)}) has been exceeded! Current: ${formatCurrency(categoryTotal)}`,
           type: 'warning',
           read: false
         });
-      } else if (target.type === 'expense' && categoryTotal >= target.amount * 0.9) {
+      } else if (targetType === 'expense' && categoryTotal >= target.amount * 0.9) {
         newNotifications.push({
           id: crypto.randomUUID(),
-          message: `Expense for ${category} (${formatCurrency(categoryTotal)}) is approaching your limit of ${formatCurrency(target.amount)}`,
+          message: `Expense for ${target.name} (${formatCurrency(categoryTotal)}) is approaching your limit of ${formatCurrency(target.amount)}`,
           type: 'info',
           read: false
         });
@@ -256,30 +270,68 @@ export const FinanceProvider: React.FC<FinanceProviderProps> = ({ children }) =>
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     try {
       setLoading(true);
-      const monthKey = `${currentYear}-${new Date(Date.parse(`${currentMonth} 1, ${currentYear}`)).getMonth() + 1}`;
+      
+      // Use transaction's month and year to update the correct monthly data
+      const transactionMonth = transaction.month;
+      const transactionYear = transaction.year || currentYear;
+      const monthKey = `${transactionYear}-${transactionMonth + 1}`;
+      
+      // Current month key (for the displayed UI)
+      const currentMonthIndex = new Date(Date.parse(`${currentMonth} 1, ${currentYear}`)).getMonth();
+      const currentMonthKey = `${currentYear}-${currentMonthIndex + 1}`;
+      
+      console.log('Adding transaction:', transaction);
+      console.log('For month/year:', transactionMonth, transactionYear);
+      console.log('Current month/index/year:', currentMonth, currentMonthIndex, currentYear);
+      console.log('monthKey vs currentMonthKey:', monthKey, currentMonthKey);
       
       // Call API to add transaction
       const newTransaction = await TransactionAPI.create(transaction);
+      console.log('New transaction created:', newTransaction);
       
-      // Update local state
-      setTransactions(prev => [...prev, newTransaction]);
+      // Update local state if the transaction belongs to the current displayed month
+      if (monthKey === currentMonthKey) {
+        const updatedTransactions = [...transactions, newTransaction];
+        setTransactions(updatedTransactions);
+        
+        // Update summary for current month - do this IMMEDIATELY
+        const updatedSummary = calculateSummaryData(updatedTransactions);
+        console.log('Updating summary to:', updatedSummary);
+        setSummary(updatedSummary);
+        
+        // Re-check targets for current month
+        checkTargets(updatedTransactions, targets);
+      }
       
-      // Update summary
-      const updatedSummary = calculateSummaryData([...transactions, newTransaction]);
-      setSummary(updatedSummary);
-      
-      // Update monthly data
-      setMonthlyData(prev => ({
-        ...prev,
-        [monthKey]: {
-          ...prev[monthKey],
-          transactions: [...(prev[monthKey]?.transactions || []), newTransaction],
-          summary: updatedSummary
-        }
-      }));
-      
-      // Check targets
-      checkTargets([...transactions, newTransaction], targets);
+      // Always update monthly data for the transaction's month
+      setMonthlyData(prev => {
+        // Get the existing monthly data or create empty structure
+        const existingMonthData = prev[monthKey] || {
+          transactions: [],
+          targets: [],
+          summary: {
+            totalIncome: 0,
+            totalExpenses: 0,
+            availableBalance: 0, 
+            netWorth: 0
+          }
+        };
+        
+        // Add the new transaction to this month's data
+        const updatedTransactions = [...(existingMonthData.transactions || []), newTransaction];
+        
+        // Calculate updated summary for this month
+        const updatedSummary = calculateSummaryData(updatedTransactions);
+        
+        return {
+          ...prev,
+          [monthKey]: {
+            ...existingMonthData,
+            transactions: updatedTransactions,
+            summary: updatedSummary
+          }
+        };
+      });
     } catch (err) {
       setError('Failed to add transaction');
       console.error('Error adding transaction:', err);
@@ -292,34 +344,73 @@ export const FinanceProvider: React.FC<FinanceProviderProps> = ({ children }) =>
   const deleteTransaction = async (id: string) => {
     try {
       setLoading(true);
-      const monthKey = `${currentYear}-${new Date(Date.parse(`${currentMonth} 1, ${currentYear}`)).getMonth() + 1}`;
+      
+      // Find the transaction to be deleted
+      const deletedTransaction = transactions.find(t => t.id === id);
+      
+      if (!deletedTransaction) {
+        console.error('Transaction not found for deletion:', id);
+        return;
+      }
       
       // API call to delete transaction
       await TransactionAPI.delete(id);
       
-      // Update local state
-      const deletedTransaction = transactions.find(t => t.id === id);
-      const updatedTransactions = transactions.filter(t => t.id !== id);
-      setTransactions(updatedTransactions);
+      console.log('Deleting transaction:', deletedTransaction);
       
-      if (deletedTransaction) {
-        // Update summary
+      // Determine which month's data needs to be updated
+      const transactionMonth = deletedTransaction.month;
+      const transactionYear = deletedTransaction.year || currentYear;
+      const monthKey = `${transactionYear}-${transactionMonth + 1}`;
+      
+      // Current month key (for the displayed UI)
+      const currentMonthIndex = new Date(Date.parse(`${currentMonth} 1, ${currentYear}`)).getMonth();
+      const currentMonthKey = `${currentYear}-${currentMonthIndex + 1}`;
+      
+      console.log('Transaction month/year:', transactionMonth, transactionYear);
+      console.log('Current month/index/year:', currentMonth, currentMonthIndex, currentYear);
+      console.log('monthKey vs currentMonthKey:', monthKey, currentMonthKey);
+      
+      // Update local state if the transaction belongs to the current displayed month
+      if (monthKey === currentMonthKey) {
+        const updatedTransactions = transactions.filter(t => t.id !== id);
+        setTransactions(updatedTransactions);
+        
+        // Update summary for current month - do this IMMEDIATELY 
         const updatedSummary = calculateSummaryData(updatedTransactions);
+        console.log('Updating summary to:', updatedSummary);
         setSummary(updatedSummary);
         
-        // Update monthly data
-        setMonthlyData(prev => ({
+        // Re-check targets for current month
+        checkTargets(updatedTransactions, targets);
+      }
+      
+      // Always update monthly data for the transaction's month
+      setMonthlyData(prev => {
+        // Get the existing monthly data
+        const existingMonthData = prev[monthKey];
+        
+        if (!existingMonthData) {
+          console.error('Monthly data not found for the transaction:', monthKey);
+          return prev;
+        }
+        
+        // Remove the transaction from this month's data
+        const updatedTransactions = existingMonthData.transactions.filter(t => t.id !== id);
+        
+        // Calculate updated summary for this month
+        const updatedSummary = calculateSummaryData(updatedTransactions);
+        
+        return {
           ...prev,
           [monthKey]: {
-            ...prev[monthKey],
+            ...existingMonthData,
             transactions: updatedTransactions,
             summary: updatedSummary
           }
-        }));
-        
-        // Re-check targets
-        checkTargets(updatedTransactions, targets);
-      }
+        };
+      });
+      
     } catch (err) {
       setError('Failed to delete transaction');
       console.error('Error deleting transaction:', err);
