@@ -48,20 +48,53 @@ export const AuthAPI = {
   
   // Get the current user
   getCurrentUser: async (): Promise<AuthUser | null> => {
-  try {
-    const token = localStorage.getItem('financeTrackerToken');
-    if (!token) return null;
+    try {
+      const token = localStorage.getItem('financeTrackerToken');
+      if (!token) return null;
 
-    const response = await apiClient.get('/protected', {
-      headers: { 'X-Skip-Redirect': 'true' },
-    });
-    return response.data.user;
-  } catch (error) {
-    console.error('Get current user error:', error);
-    localStorage.removeItem('financeTrackerToken');
-    return null;
+      const response = await apiClient.get('/protected', {
+        headers: { 'X-Skip-Redirect': 'true' },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Get current user error:', error);
+      localStorage.removeItem('financeTrackerToken');
+      return null;
+    }
+  },
+
+  // Upload avatar
+  uploadAvatar: async (file: File): Promise<AuthUser> => {
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+      
+      const response = await apiClient.post('/upload-avatar', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      // Update user in local storage with new avatar
+      const currentUser = JSON.parse(localStorage.getItem('financeTrackerUser') || '{}');
+      if (currentUser) {
+        currentUser.avatar = response.data.avatar;
+        localStorage.setItem('financeTrackerUser', JSON.stringify(currentUser));
+      }
+      
+      return response.data.user;
+    } catch (error) {
+      console.error('Avatar upload error:', error);
+      throw error;
+    }
+  },
+  
+  // Get avatar URL for a user
+  getAvatarUrl: (userId: string): string => {
+    const baseUrl = import.meta.env.VITE_API_URL || 'https://finance-tracker-backend-production-1cb3.up.railway.app/api';
+    // const baseUrl = 'http://localhost:5000/api';
+    return `${baseUrl}/avatar/${userId}`;
   }
-},
 };
 
 // Transaction API

@@ -10,6 +10,7 @@ interface AuthContextType extends AuthState {
   logout: () => Promise<void>;
   clearError: () => void;
   isLoading: boolean; // Added missing property
+  uploadAvatar: (file: File) => Promise<void>; // Add avatar upload function
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -43,7 +44,7 @@ useEffect(() => {
     try {
       const cachedUserData = localStorage.getItem(USER_KEY);
       const cachedUser = cachedUserData ? JSON.parse(cachedUserData) : null;
-      const token = localStorage.getItem(USER_KEY);
+      const token = localStorage.getItem('financeTrackerToken'); // Fixed token key
       console.log('Checking auth - Cached user:', cachedUser, 'Token:', token);
 
       // Use cached user data initially
@@ -197,6 +198,34 @@ useEffect(() => {
     }
   };
   
+  // Avatar upload function
+  const uploadAvatar = async (file: File) => {
+    try {
+      setState(prev => ({ ...prev, loading: true, error: null }));
+      
+      const updatedUser = await AuthAPI.uploadAvatar(file);
+      
+      // Update user data in local storage
+      if (updatedUser) {
+        localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+      }
+      
+      setState(prev => ({
+        ...prev,
+        user: updatedUser,
+        loading: false,
+      }));
+    } catch (err: any) {
+      console.error('Avatar upload error:', err);
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: err?.response?.data?.message || 'Failed to upload avatar'
+      }));
+      throw err;
+    }
+  };
+  
   // Clear any authentication errors
   const clearError = () => {
     setState(prev => ({ ...prev, error: null }));
@@ -208,6 +237,7 @@ useEffect(() => {
     signup,
     logout,
     clearError,
+    uploadAvatar, // Add the uploadAvatar function to the context
     isLoading: state.loading // Map loading state to isLoading property
   };
   
