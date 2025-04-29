@@ -8,30 +8,14 @@
 
 body {
   margin: 0;
-  min-width: 320px;
+  /* min-width: 320px; */
   min-height: 100vh;
   background-color: #121833; /* dark color */
   color: #f8fafc; /* text-light color */
   overflow-x: hidden;
 }
 
-#root {
-  width: 100%;
-  height: 100vh;
-  display: flex;
-}
 
-/* Base component styles */
-
-/* @theme  {
-  @apply bg-primary hover:bg-blue-600 focus:ring-primary;
-
-  @apply w-full rounded-lg border border-gray-700 bg-dark px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary;
-
-  @apply text-gray-300 hover:text-white transition-colors;
-} */
-
-/* Responsive text utilities */
 @media (max-width: 640px) {
   .text-xs-limit {
     max-width: 120px;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -8,9 +8,17 @@ const Login: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  const { login } = useAuth();
+  const { login, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
-  
+
+  useEffect(() => {
+    console.log('Login page - Auth state:', { isAuthenticated, isLoading });
+    if (!isLoading && isAuthenticated) {
+      console.log('Redirecting to /dashboard from /login');
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -24,7 +32,8 @@ const Login: React.FC = () => {
       setError(null);
       
       await login(email, password);
-      navigate('/dashboard');
+      console.log('Login successful, redirecting to /dashboard');
+      navigate('/dashboard', { replace: true });
     } catch (err) {
       console.error('Login error:', err);
       setError('Invalid credentials. Please try again.');
@@ -33,6 +42,15 @@ const Login: React.FC = () => {
     }
   };
   
+  if (isLoading) {
+    console.log('Login page - Showing loading spinner');
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-dark">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-dark p-4">
       <div className="max-w-md w-full space-y-8 bg-dark.light p-8 rounded-lg shadow-lg">
@@ -42,7 +60,7 @@ const Login: React.FC = () => {
         </div>
         
         {error && (
-          <div className="bg-red-500 bg-opacity-20 text-red-500 p-3 rounded-md text-sm">
+          <div className="bg-red-500 bg-opacity-20 text-white p-3 rounded-md text-sm">
             {error}
           </div>
         )}
@@ -98,7 +116,6 @@ const Login: React.FC = () => {
           </div>
         </form>
         
-        {/* Demo account note */}
         <div className="mt-6 text-center text-sm text-gray-400">
           <p>For demo purposes, you can use any email and password.</p>
         </div>
