@@ -14,12 +14,13 @@ export interface Transaction {
 
 export interface Target {
   id: string;
-  name: string;
   amount: number;
   current?: number;
   userId?: string;
   month?: number;
   year?: number;
+  createdAt: string; 
+  category: 'income' | 'expense';
 }
 
 export interface DashboardSummary {

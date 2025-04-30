@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFinance } from '../contexts/FinanceContext';
 import { Target } from '../types';
 
@@ -6,43 +6,50 @@ const Targets: React.FC = () => {
   const { targets, transactions, summary, addTarget, updateTarget, deleteTarget } = useFinance();
   const [showForm, setShowForm] = useState(false);
   const [editingTarget, setEditingTarget] = useState<Target | null>(null);
+  const [targetAlerts, setTargetAlerts] = useState<{[key: string]: {show: boolean, message: string, type: 'warning' | 'success'}}>({}); 
 
   const [newTarget, setNewTarget] = useState<Omit<Target, 'id'>>({
-    name: '',
-    amount: 0
+    amount: 0,
+    category: 'expense',
+    createdAt: new Date().toISOString()
   });
 
   const openAddTargetForm = () => {
     setEditingTarget(null);
     setNewTarget({ 
-      name: '', 
-      amount: 0
+      amount: 0,
+      category: 'expense',
+      createdAt: new Date().toISOString()
     });
     setShowForm(true);
   };
 
   // Calculate current values for targets
-  const calculateCurrentValue = (targetName: string) => {
-    if (targetName === 'Interest Earnings') {
-      return transactions
-        .filter(t => t.type === 'income' && t.category === 'Interest')
-        .reduce((sum, t) => sum + t.amount, 0);
-    } else if (targetName === 'Monthly Income') {
-      return transactions
+  const calculateCurrentValue = (target: Target) => {
+    // Get target creation date
+    const targetCreationDate = target.createdAt ? new Date(target.createdAt) : new Date();
+    
+    // Only count transactions that happened AFTER the target was created
+    const relevantTransactions = transactions.filter(t => {
+      const transactionDate = new Date(t.date);
+      return transactionDate >= targetCreationDate;
+    });
+    
+    // Filter transactions based on target category
+    if (target.category === 'income') {
+      // For income targets, only count income transactions
+      return relevantTransactions
         .filter(t => t.type === 'income')
         .reduce((sum, t) => sum + t.amount, 0);
-    } else if (targetName.includes('Expense')) {
-      return transactions
+    } else {
+      // For expense targets, only count expense transactions
+      return relevantTransactions
         .filter(t => t.type === 'expense')
         .reduce((sum, t) => sum + t.amount, 0);
-    } else if (targetName === 'Total Balance') {
-      // Use available balance from summary (total income - total expenses)
-      return Number(summary?.totalIncome || 0) - Number(summary?.totalExpenses || 0);
     }
-    return 0;
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setNewTarget(prev => ({
       ...prev,
@@ -52,14 +59,23 @@ const Targets: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Include current date as ISO string for target creation timestamp
+    const targetWithTimestamp = {
+      ...newTarget,
+      createdAt: editingTarget?.createdAt || new Date().toISOString()
+    };
+    
     if (editingTarget) {
-      updateTarget(editingTarget.id, newTarget);
+      updateTarget(editingTarget.id, targetWithTimestamp);
     } else {
-      addTarget(newTarget);
+      addTarget(targetWithTimestamp);
     }
+    
     setNewTarget({
-      name: '',
-      amount: 0
+      amount: 0,
+      category: 'expense',
+      createdAt: new Date().toISOString()
     });
     setEditingTarget(null);
     setShowForm(false);
@@ -68,8 +84,9 @@ const Targets: React.FC = () => {
   const handleEdit = (target: Target) => {
     setEditingTarget(target);
     setNewTarget({
-      name: target.name,
-      amount: target.amount
+      amount: target.amount,
+      category: target.category,
+      createdAt: target.createdAt
     });
     setShowForm(true);
   };
@@ -78,18 +95,23 @@ const Targets: React.FC = () => {
     setShowForm(false);
     setEditingTarget(null);
     setNewTarget({ 
-      name: '', 
-      amount: 0
+      amount: 0,
+      category: 'expense',
+      createdAt: new Date().toISOString()
     });
   };
 
   const calculateProgress = (target: Target) => {
-    const currentValue = calculateCurrentValue(target.name);
-    return (currentValue / target.amount) * 100;
+    const currentValue = calculateCurrentValue(target);
+    // Ensure both values are parsed as numbers and handle division by zero
+    const targetAmount = Number(target.amount) || 0.001; // Avoid division by zero
+    const progress = (Number(currentValue) / targetAmount) * 100;
+    // Return 0 if result is NaN or negative, cap at 100 if exceeds
+    return isNaN(progress) ? 0 : Math.min(Math.max(progress, 0), 100);
   };
 
   const isTargetExceeded = (target: Target) => {
-    const currentValue = calculateCurrentValue(target.name);
+    const currentValue = calculateCurrentValue(target);
     return currentValue > target.amount;
   };
 
@@ -121,6 +143,36 @@ const Targets: React.FC = () => {
       };
     }
   };
+  
+  // Check for targets approaching their threshold and show alerts
+  useEffect(() => {
+    const alerts: {[key: string]: {show: boolean, message: string, type: 'warning' | 'success'}} = {};
+    
+    targets.forEach(target => {
+      const progress = calculateProgress(target);
+      const isIncomeTarget = target.category === 'income';
+      
+      if (progress >= 100) {
+        alerts[target.id] = {
+          show: true,
+          message: isIncomeTarget 
+            ? `Congratulations! You've reached your income target of $${target.amount.toLocaleString()}`
+            : `Warning! You've exceeded your expense limit of $${target.amount.toLocaleString()}`,
+          type: isIncomeTarget ? 'success' : 'warning'
+        };
+      } else if (progress >= 80 && progress < 100) {
+        alerts[target.id] = {
+          show: true,
+          message: isIncomeTarget 
+            ? `You're at ${progress.toFixed(1)}% of your income target of $${target.amount.toLocaleString()}`
+            : `Warning! You're at ${progress.toFixed(1)}% of your expense limit of $${target.amount.toLocaleString()}`,
+          type: isIncomeTarget ? 'success' : 'warning'
+        };
+      }
+    });
+    
+    setTargetAlerts(alerts);
+  }, [targets, transactions]);
 
   return (
     <div className="flex-1 overflow-y-auto p-3 sm:p-6">
@@ -143,17 +195,18 @@ const Targets: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Target Name
+                  Target Category
                 </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={newTarget.name}
+                <select
+                  name="category"
+                  value={newTarget.category}
                   onChange={handleInputChange}
-                  placeholder="e.g., Interest Earnings, Monthly Expenses, Total Balance"
                   className="input bg-gray-800 text-white border border-gray-600 w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
-                />
+                >
+                  <option value="income">Income</option>
+                  <option value="expense">Expense</option>
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">
@@ -200,26 +253,70 @@ const Targets: React.FC = () => {
           <div>
             <h3 className="font-semibold mb-1 text-center sm:text-left">About Financial Targets</h3>
             <p className="text-sm text-gray-400">
-              Set targets for your finances to help manage your money. You'll receive warnings when approaching or exceeding these targets.
-              For example, set a $6000 balance target to track against your total balance.
+              Set targets for your finances to help manage your money. Income targets track your earnings, while expense targets
+              help you stay within budget limits. You'll receive alerts when approaching or exceeding these targets.
             </p>
           </div>
         </div>
       </div>
+      
+      {/* Target Alerts */}
+      {Object.keys(targetAlerts).map((targetId) => {
+        const alert = targetAlerts[targetId];
+        if (!alert.show) return null;
+        
+        return (
+          <div key={`alert-${targetId}`} className={`mb-4 p-3 rounded-md ${alert.type === 'warning' ? 'bg-red-500/20 text-red-100' : 'bg-green-500/20 text-green-100'}`}>
+            <div className="flex items-center">
+              <div className={`rounded-full p-1 ${alert.type === 'warning' ? 'bg-red-500/30' : 'bg-green-500/30'} mr-3`}>
+                {alert.type === 'warning' ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                )}
+              </div>
+              <p>{alert.message}</p>
+              <button 
+                onClick={() => {
+                  setTargetAlerts(prev => ({
+                    ...prev, 
+                    [targetId]: {...prev[targetId], show: false}
+                  }));
+                }}
+                className="ml-auto text-white opacity-70 hover:opacity-100"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        );
+      })}
 
       {targets.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
           {targets.map(target => {
-            const currentValue = calculateCurrentValue(target.name);
-            const progress = Math.min((currentValue / target.amount) * 100, 100);
+            const currentValue = calculateCurrentValue(target);
+            const progress = calculateProgress(target);
             const status = getTargetStatus(target);
 
             return (
-              <div key={target.id} className="card">
+              <div key={target.id} className={`card ${target.category === 'income' ? 'border-l-4 border-green-500' : 'border-l-4 border-red-500'}`}>
                 <div className="flex justify-between items-start">
                   <div>
-                    <h2 className="font-semibold text-lg">{target.name}</h2>
-                    <p className="text-sm text-gray-400">
+                    <div className="flex items-center">
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        target.category === 'income' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                      }`}>
+                        {target.category === 'income' ? 'Income Target' : 'Expense Limit'}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-400 mt-2">
                       Target: ${target.amount.toLocaleString()}
                     </p>
                   </div>
@@ -236,7 +333,7 @@ const Targets: React.FC = () => {
                       onClick={() => deleteTarget(target.id)}
                       className="text-gray-400 hover:text-red-500 transition-colors"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
                     </button>
@@ -249,7 +346,7 @@ const Targets: React.FC = () => {
                   </div>
                   <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
                     <div
-                      className={`h-full ${status.bgColor}`}
+                      className={`h-full ${target.category === 'income' ? 'bg-green-500' : status.bgColor}`}
                       style={{ width: `${progress}%` }}
                     ></div>
                   </div>
@@ -257,7 +354,11 @@ const Targets: React.FC = () => {
                 <div className="mt-4 flex justify-between items-center">
                   <div>
                     <span className="text-xs sm:text-sm text-gray-400">Current</span>
-                    <p className={`font-semibold text-sm sm:text-base ${isTargetExceeded(target) ? 'text-red-500' : 'text-white'}`}>
+                    <p className={`font-semibold text-sm sm:text-base ${
+                      target.category === 'income' 
+                        ? 'text-green-500' 
+                        : (isTargetExceeded(target) ? 'text-red-500' : 'text-white')
+                    }`}>
                       ${currentValue.toLocaleString()}
                     </p>
                   </div>

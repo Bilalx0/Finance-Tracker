@@ -273,51 +273,53 @@ export const FinanceProvider: React.FC<FinanceProviderProps> = ({ children }) =>
     
     // Check each target against the transactions
     targets.forEach(target => {
-      // Calculate relevant transactions total based on target name
-      let categoryTotal = 0;
-      let targetType = 'expense'; // Default for notification coloring
+      // Get target creation date
+      const targetCreationDate = target.createdAt ? new Date(target.createdAt) : new Date();
       
-      if (target.name === 'Interest Earnings') {
-        categoryTotal = transactions
-          .filter(t => t.type === 'income' && t.category === 'Interest')
-          .reduce((sum, t) => sum + t.amount, 0);
-        targetType = 'income';
-      } else if (target.name === 'Monthly Income' || target.name.toLowerCase().includes('income')) {
-        categoryTotal = transactions
+      // Only consider transactions that happened after the target was created
+      const relevantTransactions = transactions.filter(t => {
+        const transactionDate = new Date(t.date);
+        return transactionDate >= targetCreationDate;
+      });
+      
+      // Calculate progress based on target category
+      let currentAmount = 0;
+      
+      if (target.category === 'income') {
+        // For income targets, only count income transactions
+        currentAmount = relevantTransactions
           .filter(t => t.type === 'income')
           .reduce((sum, t) => sum + t.amount, 0);
-        targetType = 'income';
-      } else if (target.name.toLowerCase().includes('expense')) {
-        categoryTotal = transactions
-          .filter(t => t.type === 'expense')
-          .reduce((sum, t) => sum + t.amount, 0);
       } else {
-        // For other targets, use all transactions (defaulting to expense type)
-        categoryTotal = transactions
+        // For expense targets, only count expense transactions
+        currentAmount = relevantTransactions
           .filter(t => t.type === 'expense')
           .reduce((sum, t) => sum + t.amount, 0);
       }
       
-      // Check if target is exceeded
-      if (targetType === 'income' && categoryTotal >= target.amount) {
+      // Calculate progress percentage
+      const progress = (currentAmount / target.amount) * 100;
+      
+      // Check thresholds and create notifications
+      if (target.category === 'income' && currentAmount >= target.amount) {
         newNotifications.push({
           id: crypto.randomUUID(),
-          message: `Income target for ${target.name} (${formatCurrency(target.amount)}) has been reached! Current: ${formatCurrency(categoryTotal)}`,
+          message: `Congratulations! You've reached your income target of ${formatCurrency(target.amount)}`,
           type: 'success',
           read: false
         });
-      } else if (targetType === 'expense' && categoryTotal >= target.amount) {
+      } else if (target.category === 'expense' && currentAmount >= target.amount) {
         newNotifications.push({
           id: crypto.randomUUID(),
-          message: `Expense limit for ${target.name} (${formatCurrency(target.amount)}) has been exceeded! Current: ${formatCurrency(categoryTotal)}`,
+          message: `Warning! You've exceeded your expense limit of ${formatCurrency(target.amount)}`,
           type: 'warning',
           read: false
         });
-      } else if (targetType === 'expense' && categoryTotal >= target.amount * 0.9) {
+      } else if (progress >= 80 && progress < 100) {
         newNotifications.push({
           id: crypto.randomUUID(),
-          message: `Expense for ${target.name} (${formatCurrency(categoryTotal)}) is approaching your limit of ${formatCurrency(target.amount)}`,
-          type: 'info',
+          message: `${target.category === 'income' ? 'You\'re getting close' : 'Warning!'} You're at ${progress.toFixed(1)}% of your ${target.category} target (${formatCurrency(target.amount)})`,
+          type: target.category === 'income' ? 'success' : 'info',
           read: false
         });
       }
@@ -369,8 +371,13 @@ export const FinanceProvider: React.FC<FinanceProviderProps> = ({ children }) =>
         console.log('Updating summary to:', updatedSummary);
         setSummary(updatedSummary);
         
-        // Re-check targets for current month
+        // Re-check targets for current month with the updated transaction data
         checkTargets(updatedTransactions, targets);
+        
+        // Force an immediate evaluation of all targets to update progress bars
+        // This ensures the target progress is recalculated right after adding a transaction
+        const updatedTargets = [...targets];
+        setTargets(updatedTargets);
       }
       
       // Always update monthly data for the transaction's month
