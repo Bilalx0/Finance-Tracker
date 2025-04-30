@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from "react";
-import { Bell, ChevronDown, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useState, useEffect } from "react";
+import { Bell, ChevronDown } from "lucide-react";
+import { Button } from "../components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Link, useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
@@ -10,13 +10,12 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useAuth } from "@/contexts/AuthContext";
+} from "../components/ui/dropdown-menu";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const searchInputRef = useRef<HTMLInputElement>(null);
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 

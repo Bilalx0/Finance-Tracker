@@ -1,10 +1,10 @@
-import React from 'react';
 import { Coins } from 'lucide-react';
 import { useFinance } from '../contexts/FinanceContext';
 import { useAuth } from '../contexts/AuthContext';
 
 function Balance() {
     const { summary } = useFinance();
+    const availableBalance = summary?.availableBalance || 0;
     const { user } = useAuth();
 
     return (
@@ -18,7 +18,7 @@ function Balance() {
                 </div>
                 <div className="flex justify-between items-center gap-4 mt-4">
                     <span className="text-2xl sm:text-3xl font-bold text-white">
-                        USD {summary.availableBalance.toLocaleString()}
+                        USD {availableBalance.toLocaleString()}
                     </span>
                     <div className="mr-0 sm:mr-5">
                         <Coins className="h-12 w-12 sm:h-16 sm:w-16 text-yellow-500" />

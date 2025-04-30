@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { AuthState, AuthUser } from '../types';
+import { AuthState } from '../types';
 import { AuthAPI } from '../services/api';
 
 interface AuthContextType extends AuthState {
@@ -8,6 +8,7 @@ interface AuthContextType extends AuthState {
   logout: () => Promise<void>;
   clearError: () => void;
   isLoading: boolean;
+  uploadAvatar: (file: File) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -170,6 +171,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const uploadAvatar = async (file: File) => {
+    try {
+      setState((prev) => ({ ...prev, loading: true, error: null }));
+      const updatedUser = await AuthAPI.uploadAvatar(file);
+      setState((prev) => ({
+        ...prev,
+        user: updatedUser,
+        loading: false,
+      }));
+    } catch (err: any) {
+      console.error('Avatar upload error:', err.response?.data || err.message);
+      setState((prev) => ({
+        ...prev,
+        loading: false,
+        error: err?.response?.data?.message || 'Failed to upload avatar',
+      }));
+      throw err;
+    }
+  };
+
   const clearError = () => {
     setState((prev) => ({ ...prev, error: null }));
   };
@@ -179,6 +200,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     signup,
     logout,
+    uploadAvatar,
     clearError,
     isLoading: state.loading,
   };

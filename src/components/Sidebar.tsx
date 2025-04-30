@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useFinance } from '../contexts/FinanceContext';
 import MonthSelector from './MonthSelector';
 import { ChevronDown, PanelRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
 // Month abbreviations
 const monthsAbbr = [
