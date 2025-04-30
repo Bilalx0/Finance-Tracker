@@ -10,7 +10,6 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import './App.css';
 
-// Protected route component to handle authentication
 interface ProtectedRouteProps {
   children: ReactNode;
 }
@@ -18,8 +17,12 @@ interface ProtectedRouteProps {
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
+  const token = localStorage.getItem('financeTrackerToken');
 
-  if (isLoading) {
+  console.log('ProtectedRoute - State:', { isAuthenticated, isLoading, token: token ? 'exists' : 'missing' });
+
+  // Show loading spinner if checking auth with a token
+  if (isLoading && token) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-dark">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
@@ -27,7 +30,9 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  if (!isAuthenticated) {
+  // Redirect to login only if no token or explicitly unauthenticated
+  if (!isAuthenticated && !token) {
+    console.log('Redirecting to /login from:', location.pathname);
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
@@ -54,7 +59,7 @@ function App() {
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="transactions" element={<Transactions />} />
               <Route path="targets" element={<Targets />} />
-              <Route path="spreadsheet" element={<Transactions />} /> {/* Using Transactions as a placeholder for Spreadsheet */}
+              <Route path="spreadsheet" element={<Transactions />} />
               <Route path="month/:id" element={<Dashboard />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Route>
