@@ -6,9 +6,19 @@
   ],
 
   "compilerOptions": {
-    "baseUrl": ".",
+    "noEmit": false,
+    "checkJs": false,
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "suppressImplicitAnyIndexErrors": true
+  },
+
+  "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
-    }
-  }
+    },
+  "include": ["src"],
+  "exclude": ["node_modules"]
 }
