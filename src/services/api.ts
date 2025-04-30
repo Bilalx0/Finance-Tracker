@@ -98,6 +98,47 @@ export const AuthAPI = {
       return null;
     }
   },
+
+  uploadAvatar: async (file: File): Promise<AuthUser> => {
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      console.log('Uploading avatar:', { fileName: file.name, fileSize: file.size });
+      const response = await apiClient.post('/upload-avatar', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      console.log('Avatar upload response:', response.data);
+
+      if (response.data.user) {
+        console.log('Updating localStorage with new user data');
+        localStorage.setItem('financeTrackerUser', JSON.stringify(response.data.user));
+        return response.data.user;
+      } else if (response.data.avatar) {
+        // If only avatar URL is returned, create a user object with it
+        const cachedUserData = localStorage.getItem('financeTrackerUser');
+        const cachedUser = cachedUserData ? JSON.parse(cachedUserData) : null;
+        
+        if (cachedUser) {
+          const updatedUser = { 
+            ...cachedUser, 
+            avatar: response.data.avatar 
+          };
+          localStorage.setItem('financeTrackerUser', JSON.stringify(updatedUser));
+          return updatedUser;
+        }
+        
+        throw new Error('Failed to update user data');
+      } else {
+        throw new Error('Invalid avatar upload response');
+      }
+    } catch (error: any) {
+      console.error('Avatar upload error:', error.response?.data || error.message);
+      throw error;
+    }
+  },
 };
 
 export const TransactionAPI = {

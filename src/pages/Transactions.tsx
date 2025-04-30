@@ -24,10 +24,20 @@ const Transactions: React.FC = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
 
-    setNewTransaction(prev => ({
-      ...prev,
-      [name]: name === 'amount' ? parseFloat(value) : value
-    }));
+    // Fix for properly handling dollar values
+    if (name === 'amount') {
+      // Parse as a float and ensure it's a valid number
+      const numValue = parseFloat(value);
+      setNewTransaction(prev => ({
+        ...prev,
+        amount: isNaN(numValue) ? 0 : numValue
+      }));
+    } else {
+      setNewTransaction(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   // Handle category change with type awareness
@@ -60,6 +70,8 @@ const Transactions: React.FC = () => {
 
     addTransaction({
       ...newTransaction,
+      // Ensure amount is a valid number
+      amount: isNaN(newTransaction.amount) ? 0 : newTransaction.amount,
       month: transactionMonth,
       year: transactionYear,
     } as Omit<Transaction, 'id'>); // Explicitly cast to the expected type
@@ -91,13 +103,14 @@ const Transactions: React.FC = () => {
       }
     });
 
+  // Ensure amounts are valid numbers before calculations
   const incomeTotal = transactions
     .filter(t => t.type === 'income')
-    .reduce((sum, t) => sum + t.amount, 0);
+    .reduce((sum, t) => sum + (isNaN(t.amount) ? 0 : Number(t.amount)), 0);
 
   const expenseTotal = transactions
     .filter(t => t.type === 'expense')
-    .reduce((sum, t) => sum + t.amount, 0);
+    .reduce((sum, t) => sum + (isNaN(t.amount) ? 0 : Number(t.amount)), 0);
 
   const balance = incomeTotal - expenseTotal;
 

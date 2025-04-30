@@ -3,6 +3,10 @@ import { Transaction, Target, DashboardSummary, Notification, MonthData } from '
 import { TransactionAPI, TargetAPI, MonthlyDataAPI } from '../services/api';
 import { useAuth } from './AuthContext';
 
+// Constants for localStorage keys
+const SUMMARY_STORAGE_KEY = 'financeTrackerSummary';
+const MONTHLY_DATA_STORAGE_KEY = 'financeTrackerMonthlyData';
+
 interface FinanceContextType {
   transactions: Transaction[];
   targets: Target[];
@@ -33,6 +37,38 @@ export const useFinance = () => {
   return context;
 };
 
+// Helper function to get stored summary from localStorage
+const getStoredSummary = (): DashboardSummary | null => {
+  try {
+    const storedSummary = localStorage.getItem(SUMMARY_STORAGE_KEY);
+    if (storedSummary) {
+      const parsedSummary = JSON.parse(storedSummary);
+      return {
+        totalIncome: Number(parsedSummary.totalIncome),
+        totalExpenses: Number(parsedSummary.totalExpenses),
+        availableBalance: Number(parsedSummary.availableBalance),
+        netWorth: Number(parsedSummary.netWorth)
+      };
+    }
+  } catch (error) {
+    console.error('Failed to parse stored summary:', error);
+  }
+  return null;
+};
+
+// Helper function to get stored monthly data from localStorage
+const getStoredMonthlyData = (): Record<string, MonthData> | null => {
+  try {
+    const storedMonthlyData = localStorage.getItem(MONTHLY_DATA_STORAGE_KEY);
+    if (storedMonthlyData) {
+      return JSON.parse(storedMonthlyData);
+    }
+  } catch (error) {
+    console.error('Failed to parse stored monthly data:', error);
+  }
+  return null;
+};
+
 interface FinanceProviderProps {
   children: ReactNode;
 }
@@ -46,19 +82,52 @@ export const FinanceProvider: React.FC<FinanceProviderProps> = ({ children }) =>
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [targets, setTargets] = useState<Target[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [summary, setSummary] = useState<DashboardSummary>({
-    totalIncome: 0,
-    totalExpenses: 0,
-    availableBalance: 0,
-    netWorth: 0
+  
+  // Initialize summary with stored value if available
+  const [summary, setSummary] = useState<DashboardSummary>(() => {
+    return getStoredSummary() || {
+      totalIncome: 0,
+      totalExpenses: 0,
+      availableBalance: 0,
+      netWorth: 0
+    };
   });
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
   // Month tracking
   const [currentMonth, setCurrentMonth] = useState(now.toLocaleString('default', { month: 'long' }));
   const [currentYear, setCurrentYear] = useState(now.getFullYear());
-  const [monthlyData, setMonthlyData] = useState<Record<string, MonthData>>({});
+  
+  // Initialize monthly data with stored value if available
+  const [monthlyData, setMonthlyData] = useState<Record<string, MonthData>>(() => {
+    return getStoredMonthlyData() || {};
+  });
+  
+  // Store summary in localStorage whenever it changes
+  useEffect(() => {
+    if (summary && summary.availableBalance !== 0) {
+      try {
+        localStorage.setItem(SUMMARY_STORAGE_KEY, JSON.stringify(summary));
+        console.log('Stored summary in localStorage:', summary);
+      } catch (error) {
+        console.error('Failed to store summary in localStorage:', error);
+      }
+    }
+  }, [summary]);
+  
+  // Store monthly data in localStorage whenever it changes
+  useEffect(() => {
+    if (Object.keys(monthlyData).length > 0) {
+      try {
+        localStorage.setItem(MONTHLY_DATA_STORAGE_KEY, JSON.stringify(monthlyData));
+        console.log('Stored monthly data in localStorage');
+      } catch (error) {
+        console.error('Failed to store monthly data in localStorage:', error);
+      }
+    }
+  }, [monthlyData]);
 
   // Set the current month and year
   const setMonth = (month: number, year: number) => {
@@ -139,13 +208,14 @@ export const FinanceProvider: React.FC<FinanceProviderProps> = ({ children }) =>
   
   // Calculate summary data from transactions
   const calculateSummaryData = (transactionsData: Transaction[]): DashboardSummary => {
+    // Fix: Convert string values to numbers and handle NaN
     const totalIncome = transactionsData
       .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + t.amount, 0);
+      .reduce((sum, t) => sum + (isNaN(Number(t.amount)) ? 0 : Number(t.amount)), 0);
       
     const totalExpenses = transactionsData
       .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0);
+      .reduce((sum, t) => sum + (isNaN(Number(t.amount)) ? 0 : Number(t.amount)), 0);
       
     const availableBalance = totalIncome - totalExpenses;
     
