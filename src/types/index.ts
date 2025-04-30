@@ -1,27 +1,28 @@
-export type TransactionType = 'income' | 'expense';
+
 
 export interface Transaction {
   id: string;
-  type: TransactionType;
+  type: 'income' | 'expense';
   amount: number;
   category: string;
-  date: string;
   description?: string;
-  userId?: string;
+  date: string;
   month: number;
   year: number;
+  userId: string;
 }
 
 export interface Target {
   id: string;
-  amount: number;
-  current?: number;
-  userId?: string;
-  month?: number;
-  year?: number;
-  createdAt: string; 
-  category: 'income' | 'expense';
+  userId: string;
+  category: string;
+  type: 'income' | 'expense';
+  targetAmount: number;
+  currentAmount: number;
+  createdAt: string;
+  updatedAt: string;
 }
+
 
 export interface DashboardSummary {
   totalIncome: number;
@@ -84,8 +85,11 @@ export const ExpenseCategories: Record<string, string> = {
 };
 
 export interface Notification {
-  id: string;
+  id: string | number;
+  title: string;
   message: string;
-  type: 'warning' | 'info' | 'success' | 'error';
-  read: boolean;
+  type: 'info' | 'success' | 'warning' | 'error';
+  isRead: boolean;
+  createdAt?: string;
+  userId?: number;
 }

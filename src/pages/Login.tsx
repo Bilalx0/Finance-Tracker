@@ -34,9 +34,9 @@ const Login: React.FC = () => {
       await login(email, password);
       console.log('Login successful, redirecting to /dashboard');
       navigate('/dashboard', { replace: true });
-    } catch (err) {
-      console.error('Login error:', err);
-      setError('Invalid credentials. Please try again.');
+    } catch (err: any) {
+      console.error('Login error:', err.response?.data || err.message);
+      setError(err.response?.data?.message || 'Invalid credentials. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -52,7 +52,7 @@ const Login: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-dark px-4 sm:px-6 lg:px-8 font-josefin ">
+    <div className="min-h-screen flex items-center justify-center bg-dark px-4 sm:px-6 lg:px-8 font-josefin">
       <div className="w-full max-w-md space-y-8 bg-dark.light p-6 sm:p-8 rounded-xl shadow-2xl border-gray-600 border">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-white tracking-tight">Finance Tracker</h1>

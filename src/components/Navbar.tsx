@@ -35,17 +35,19 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     try {
+      console.log('Initiating logout');
       await logout();
-      navigate("/login");
+      console.log('Logout successful, navigating to /login');
+      navigate("/login", { replace: true });
     } catch (error) {
       console.error("Logout failed:", error);
+      navigate("/login", { replace: true });
     }
   };
 
   return (
     <header className="border-b border-gray-600 bg-[#1E2A44]">
       <div className="w-full px-4 sm:px-8 py-4 flex items-center justify-between">
-        {/* Logo and Brand */}
         <div className={`${isSearchOpen && isMobile ? "hidden" : "block"}`}>
           <Link to="/" className="flex flex-col">
             <h1 className="text-lg sm:text-xl font-bold text-white">Finance Budget Tracker</h1>
@@ -53,9 +55,8 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Right Icons */}
         <div className={`flex items-center gap-2 ${isSearchOpen && isMobile ? "hidden" : "flex"}`}>
-          {/* Notification Bell */}
+          <Link to="/notifications">
           <Button
             variant="ghost"
             size="icon"
@@ -64,8 +65,8 @@ export default function Navbar() {
             <Bell className="h-4 sm:h-5 w-4 sm:w-5" />
             <span className="sr-only">Notifications</span>
           </Button>
+          </Link>
 
-          {/* User Profile */}
           {isAuthenticated && user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

@@ -25,7 +25,6 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
     description: '',
   });
 
-  // Reset form when modal type changes
   useEffect(() => {
     if (isOpen) {
       setTransaction({
@@ -62,7 +61,6 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Convert amount to number
     const amount = parseFloat(transaction.amount);
     
     if (isNaN(amount) || amount <= 0) {
@@ -70,13 +68,10 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
       return;
     }
     
-    // Get month index from transaction date instead of currentMonth
-    // This ensures the transaction is recorded for the correct month based on date
     const transactionDate = new Date(transaction.date);
     const transactionMonthIndex = transactionDate.getMonth();
     const transactionYear = transactionDate.getFullYear();
     
-    // Add transaction with user ID and month data from the transaction date
     addTransaction({
       type: transaction.type,
       amount: amount,
@@ -88,13 +83,11 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
       year: transactionYear
     });
     
-    // Reset form and close modal
     onClose();
   };
 
   if (!isOpen) return null;
 
-  // Get category options based on transaction type
   const categoryOptions = transaction.type === 'income'
     ? Object.keys(IncomeCategories)
     : Object.keys(ExpenseCategories);
@@ -102,7 +95,6 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 overflow-y-auto">
       <div className="bg-dark max-w-md w-full rounded-lg shadow-lg overflow-hidden relative">
-        {/* Close button */}
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-white z-10"
@@ -120,7 +112,6 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
           <span className="text-sm text-gray-400">{currentMonth} {currentYear}</span>
         </div>
 
-        {/* Transaction type selector */}
         <div className="flex border-b border-gray-800">
           <button
             type="button"
@@ -148,11 +139,10 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
 
         <form onSubmit={handleSubmit} className="p-4">
           <div className="mb-4">
-            {/* Category selection with icon */}
             <div className="flex items-start mb-4">
               <div className="mr-4">
                 <div className={`w-12 h-12 rounded-full ${
-                  transaction.type === 'income' 
+                  transaction.type === 'income'
                     ? 'bg-green-500 bg-opacity-20 flex items-center justify-center' 
                     : 'bg-red-500 bg-opacity-20 flex items-center justify-center'
                 }`}>
@@ -190,7 +180,6 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
               </div>
             </div>
 
-            {/* Value input */}
             <div className="flex items-start mb-4">
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-400 mb-1">
@@ -211,7 +200,6 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
               </div>
             </div>
 
-            {/* Total */}
             <div className="flex justify-between items-center mb-4">
               <span className="text-gray-400">Total:</span>
               <span className={`font-bold ${transaction.type === 'income' ? 'text-green-500' : 'text-red-500'}`}>
@@ -219,7 +207,6 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
               </span>
             </div>
 
-            {/* Date input */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-400 mb-1">
                 Date
@@ -233,7 +220,6 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
               />
             </div>
 
-            {/* Notes */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-400 mb-1">
                 Notes (Optional)
@@ -247,7 +233,6 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
               />
             </div>
 
-            {/* Action buttons */}
             <div className="flex justify-end space-x-2 mt-6">
               <button
                 type="button"

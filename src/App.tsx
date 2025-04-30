@@ -9,7 +9,9 @@ import Targets from './pages/Targets';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import './App.css';
-
+import { ToastContainer } from 'react-toastify'; // Import ToastContainer
+import 'react-toastify/dist/ReactToastify.css'; // Import toast styles
+import Notification from './pages/Notification';
 interface ProtectedRouteProps {
   children: ReactNode;
 }
@@ -60,11 +62,25 @@ function App() {
               <Route path="transactions" element={<Transactions />} />
               <Route path="targets" element={<Targets />} />
               <Route path="spreadsheet" element={<Transactions />} />
+              <Route path="notifications" element={<Notification />} />
               <Route path="month/:id" element={<Dashboard />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Route>
           </Routes>
         </Router>
+        {/* Add ToastContainer to display notifications */}
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="dark"
+        />
       </FinanceProvider>
     </AuthProvider>
   );

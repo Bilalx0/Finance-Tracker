@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useFinance } from '../contexts/FinanceContext';
 import MonthSelector from './MonthSelector';
-import { ChevronDown, PanelRight } from 'lucide-react';
+import { ChevronDown, PanelRight, LayoutDashboard, Target, CreditCard, PieChart, LineChart, Wallet, BadgeDollarSign } from 'lucide-react';
 
 // Month abbreviations
 const monthsAbbr = [
@@ -47,10 +47,13 @@ const Sidebar: React.FC = () => {
   };
 
   const navItems = [
-    { path: '/dashboard', name: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-    { path: '/targets', name: 'Targets', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
-    { path: '/transactions', name: 'Transactions', icon: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
-  ];
+    { path: "/dashboard", name: "Dashboard", icon: LayoutDashboard },
+    { path: "/targets", name: "Targets", icon: Target },
+    { path: "/transactions", name: "Transactions", icon: CreditCard },
+    { path: "/budget", name: "Budget", icon: PieChart },
+    { path: "/insights", name: "Insights", icon: LineChart },
+    { path: "/goals", name: "Goals", icon: Wallet },
+  ]
 
   useEffect(() => {
     let timeout: NodeJS.Timeout;
@@ -104,10 +107,8 @@ const Sidebar: React.FC = () => {
           <div className="p-4 border-b border-gray-600">
             {(isSidebarOpen || isMobile) && (
               <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold mr-2">
-                    S
-                  </div>
+                <div className="flex items-center gap-2">
+                <BadgeDollarSign strokeWidth={1} />
                   {isSidebarOpen && <span className="font-semibold">Savi</span>}
                 </div>
                 <button
@@ -149,34 +150,28 @@ const Sidebar: React.FC = () => {
             </div>
           )}
 
-          <div className="flex-1 overflow-y-auto">
-            <nav className="p-2">
-              <ul className="space-y-1">
-                {navItems.map((item, index) => (
-                  <li key={index}>
-                    <a
-                      className={`
-                        flex items-center px-3 py-2 text-sm rounded-md
-                        ${item.name === 'Goals' ? 'bg-gray-700 text-blue-500' : 'hover:bg-gray-700 hover:text-blue-500'}
-                        ${!isSidebarOpen && !isMobile ? 'justify-center' : ''}
-                      `}
-                      href={item.path}
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5 text-gray-400"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
-                      </svg>
-                      {(isSidebarOpen || isMobile) && <span className="ml-3">{item.name}</span>}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </nav>
+<div className="flex-1 overflow-y-auto">
+  <nav className="p-2">
+    <ul className="space-y-1">
+      {navItems.map((item, index) => (
+        <li key={index}>
+          <a
+            className={`
+              flex items-center px-3 py-2 text-sm rounded-md
+              hover:bg-gray-700 hover:text-blue-500
+              ${!isSidebarOpen && !isMobile ? 'justify-center' : ''}
+            `}
+            href={item.path}
+          >
+            <item.icon
+            className='h-5 w-5 text-gray-400'
+            />
+            {(isSidebarOpen || isMobile) && <span className="ml-3">{item.name}</span>}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </nav>
 
             {(isSidebarOpen || isMobile) && (
               <div className="p-4 border-t border-gray-600">

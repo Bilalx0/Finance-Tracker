@@ -4,15 +4,12 @@ import { ExpenseCategories, IncomeCategories, Transaction } from '../types';
 
 const Transactions: React.FC = () => {
   const { transactions, addTransaction, deleteTransaction } = useFinance();
-  // Commenting out unused variables
-  // const { transactions, addTransaction, deleteTransaction, currentMonth, currentYear } = useFinance();
   const [showForm, setShowForm] = useState(false);
   const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [sortBy, setSortBy] = useState<'date' | 'amount'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  // Form state
-  const [newTransaction, setNewTransaction] = useState<Omit<Transaction, 'id' | 'month' | 'year'>>({
+  const [newTransaction, setNewTransaction] = useState<Omit<Transaction, 'id' | 'month' | 'year' | 'userId'>>({
     type: 'income',
     amount: 0,
     category: 'Salary',
@@ -20,17 +17,14 @@ const Transactions: React.FC = () => {
     description: ''
   });
 
-  // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
 
-    // Fix for properly handling dollar values
     if (name === 'amount') {
-      // Parse as a float and ensure it's a valid number
       const numValue = parseFloat(value);
       setNewTransaction(prev => ({
         ...prev,
-        amount: isNaN(numValue) ? 0 : numValue
+        amount: isNaN(numValue) || numValue < 0 ? 0 : numValue
       }));
     } else {
       setNewTransaction(prev => ({
@@ -40,7 +34,6 @@ const Transactions: React.FC = () => {
     }
   };
 
-  // Handle category change with type awareness
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setNewTransaction(prev => ({
       ...prev,
@@ -48,7 +41,6 @@ const Transactions: React.FC = () => {
     }));
   };
 
-  // Handle transaction type change
   const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const type = e.target.value as 'income' | 'expense';
     const defaultCategory = type === 'income' ? 'Salary' : 'Housing';
@@ -60,57 +52,70 @@ const Transactions: React.FC = () => {
     }));
   };
 
-  // Submit new transaction
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (newTransaction.amount <= 0) {
+      alert('Amount must be greater than 0');
+      return;
+    }
+
     const transactionDate = new Date(newTransaction.date);
+    if (isNaN(transactionDate.getTime())) {
+      alert('Invalid date');
+      return;
+    }
+
     const transactionMonth = transactionDate.getMonth();
     const transactionYear = transactionDate.getFullYear();
 
-    addTransaction({
-      ...newTransaction,
-      // Ensure amount is a valid number
-      amount: isNaN(newTransaction.amount) ? 0 : newTransaction.amount,
-      month: transactionMonth,
-      year: transactionYear,
-    } as Omit<Transaction, 'id'>); // Explicitly cast to the expected type
+    try {
+      await addTransaction({
+        ...newTransaction,
+        amount: Number(newTransaction.amount),
+        month: transactionMonth,
+        year: transactionYear,
+      });
 
-    // Reset form
-    setNewTransaction({
-      type: 'income',
-      amount: 0,
-      category: 'Salary',
-      date: new Date().toISOString().split('T')[0],
-      description: ''
-    });
+      setNewTransaction({
+        type: 'income',
+        amount: 0,
+        category: 'Salary',
+        date: new Date().toISOString().split('T')[0],
+        description: ''
+      });
 
-    setShowForm(false);
+      setShowForm(false);
+    } catch (err) {
+      console.error('Error adding transaction:', err);
+      alert('Failed to add transaction');
+    }
   };
 
-  // Filter and sort transactions
-  const filteredTransactions = transactions
-    .filter(transaction =>
+  const filteredTransactions = (Array.isArray(transactions) ? transactions : [])
+    .filter(transaction => 
       filter === 'all' ? true : transaction.type === filter
     )
+    .filter(transaction => transaction.amount > 0)
     .sort((a, b) => {
       if (sortBy === 'date') {
         const dateA = new Date(a.date).getTime();
         const dateB = new Date(b.date).getTime();
         return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
       } else {
-        return sortOrder === 'asc' ? a.amount - b.amount : b.amount - a.amount;
+        const amountA = Number(a.amount) || 0;
+        const amountB = Number(b.amount) || 0;
+        return sortOrder === 'asc' ? amountA - amountB : amountB - amountA;
       }
     });
 
-  // Ensure amounts are valid numbers before calculations
-  const incomeTotal = transactions
+  const incomeTotal = filteredTransactions
     .filter(t => t.type === 'income')
-    .reduce((sum, t) => sum + (isNaN(t.amount) ? 0 : Number(t.amount)), 0);
+    .reduce((sum, t) => sum + (isNaN(Number(t.amount)) ? 0 : Number(t.amount)), 0);
 
-  const expenseTotal = transactions
+  const expenseTotal = filteredTransactions
     .filter(t => t.type === 'expense')
-    .reduce((sum, t) => sum + (isNaN(t.amount) ? 0 : Number(t.amount)), 0);
+    .reduce((sum, t) => sum + (isNaN(Number(t.amount)) ? 0 : Number(t.amount)), 0);
 
   const balance = incomeTotal - expenseTotal;
 
@@ -126,7 +131,6 @@ const Transactions: React.FC = () => {
         </button>
       </div>
       
-      {/* Transaction Entry Form */}
       {showForm && (
         <div className="card mb-4 sm:mb-6">
           <h2 className="text-lg font-semibold mb-4">Add New Transaction</h2>
@@ -159,7 +163,7 @@ const Transactions: React.FC = () => {
                   onChange={handleInputChange}
                   placeholder="0.00"
                   className="input bg-dark w-full"
-                  min="0"
+                  min="0.01"
                   step="0.01"
                   required
                 />
@@ -229,7 +233,6 @@ const Transactions: React.FC = () => {
         </div>
       )}
       
-      {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 mb-4 sm:mb-6">
         <div className="card bg-gradient-to-br from-green-500/20 to-blue-500/20">
           <h3 className="text-sm text-gray-300 mb-1">Income</h3>
@@ -244,12 +247,11 @@ const Transactions: React.FC = () => {
         <div className="card bg-gradient-to-br from-blue-500/20 to-purple-500/20">
           <h3 className="text-sm text-gray-300 mb-1">Balance</h3>
           <p className={`text-xl sm:text-2xl font-bold ${balance >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-            ${balance.toLocaleString()}
+            ${Math.abs(balance).toLocaleString()}
           </p>
         </div>
       </div>
       
-      {/* Filters and Sorting */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 bg-dark.light rounded-lg p-3 sm:p-4">
         <div className="flex flex-wrap w-full md:w-auto gap-3 mb-3 md:mb-0">
           <div className="w-full sm:w-auto">
@@ -259,7 +261,7 @@ const Transactions: React.FC = () => {
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value as 'all' | 'income' | 'expense')}
-              className="select bg-dark py-1 px-3 text-sm w-full sm:w-auto"
+              className="select bg-dark py-1 px-3 text-sm w-full sm:w-auto text-gray-400"
             >
               <option value="all">All</option>
               <option value="income">Income</option>
@@ -274,7 +276,7 @@ const Transactions: React.FC = () => {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as 'date' | 'amount')}
-              className="select bg-dark py-1 px-3 text-sm w-full"
+              className="select bg-dark py-1 px-3 text-sm w-full text-gray-400"
             >
               <option value="date">Date</option>
               <option value="amount">Amount</option>
@@ -288,7 +290,7 @@ const Transactions: React.FC = () => {
             <select
               value={sortOrder}
               onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
-              className="select bg-dark py-1 px-3 text-sm w-full"
+              className="select bg-dark py-1 px-3 text-sm w-full text-gray-400"
             >
               <option value="desc">Newest First</option>
               <option value="asc">Oldest First</option>
@@ -297,11 +299,10 @@ const Transactions: React.FC = () => {
         </div>
         
         <div className="text-gray-400 text-sm w-full md:w-auto text-center md:text-right">
-          Showing {filteredTransactions.length} of {transactions.length} transactions
+          Showing {filteredTransactions.length} of {(Array.isArray(transactions) ? transactions : []).length} transactions
         </div>
       </div>
       
-      {/* Transactions Table */}
       <div className="card overflow-hidden p-0 sm:p-4">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -344,7 +345,7 @@ const Transactions: React.FC = () => {
                     <td className="py-2 sm:py-3 max-w-xs truncate hidden sm:table-cell text-xs sm:text-sm">{transaction.description || '-'}</td>
                     <td className="py-2 sm:py-3 hidden md:table-cell text-xs sm:text-sm">{new Date(transaction.date).toLocaleDateString()}</td>
                     <td className={`py-2 sm:py-3 text-right font-medium text-xs sm:text-sm ${transaction.type === 'income' ? 'text-green-500' : 'text-red-500'}`}>
-                      {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toLocaleString()}
+                      {transaction.type === 'income' ? '+' : '-'}${Number(transaction.amount || 0).toLocaleString()}
                     </td>
                     <td className="py-2 sm:py-3 text-right pr-3 sm:pr-4">
                       <button
@@ -352,7 +353,7 @@ const Transactions: React.FC = () => {
                         className="text-gray-400 hover:text-red-500 transition-colors"
                         aria-label="Delete transaction"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 24 24" stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
                       </button>

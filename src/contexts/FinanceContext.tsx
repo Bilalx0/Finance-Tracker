@@ -1,9 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Transaction, Target, DashboardSummary, Notification, MonthData } from '../types';
-import { TransactionAPI, TargetAPI, MonthlyDataAPI } from '../services/api';
+import { TransactionAPI, TargetAPI, MonthlyDataAPI, NotificationAPI } from '../services/api';
 import { useAuth } from './AuthContext';
 
-// Constants for localStorage keys
 const SUMMARY_STORAGE_KEY = 'financeTrackerSummary';
 const MONTHLY_DATA_STORAGE_KEY = 'financeTrackerMonthlyData';
 
@@ -21,10 +20,12 @@ interface FinanceContextType {
   isMonthLocked: (month: number, year: number) => boolean;
   addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
-  addTarget: (target: Omit<Target, 'id'>) => Promise<void>;
+  addTarget: (target: Omit<Target, 'id' | 'userId' | 'currentAmount' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   updateTarget: (id: string, target: Partial<Target>) => Promise<void>;
   deleteTarget: (id: string) => Promise<void>;
-  markNotificationAsRead: (id: string) => void;
+  markNotificationAsRead: (id: string | number) => Promise<void>;
+  deleteNotification: (id: string | number) => Promise<void>;
+  clearReadNotifications: () => Promise<void>;
 }
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
@@ -37,17 +38,16 @@ export const useFinance = () => {
   return context;
 };
 
-// Helper function to get stored summary from localStorage
 const getStoredSummary = (): DashboardSummary | null => {
   try {
     const storedSummary = localStorage.getItem(SUMMARY_STORAGE_KEY);
     if (storedSummary) {
       const parsedSummary = JSON.parse(storedSummary);
       return {
-        totalIncome: Number(parsedSummary.totalIncome),
-        totalExpenses: Number(parsedSummary.totalExpenses),
-        availableBalance: Number(parsedSummary.availableBalance),
-        netWorth: Number(parsedSummary.netWorth)
+        totalIncome: Number(parsedSummary.totalIncome) || 0,
+        totalExpenses: Number(parsedSummary.totalExpenses) || 0,
+        availableBalance: Number(parsedSummary.availableBalance) || 0,
+        netWorth: Number(parsedSummary.netWorth) || 0,
       };
     }
   } catch (error) {
@@ -56,7 +56,6 @@ const getStoredSummary = (): DashboardSummary | null => {
   return null;
 };
 
-// Helper function to get stored monthly data from localStorage
 const getStoredMonthlyData = (): Record<string, MonthData> | null => {
   try {
     const storedMonthlyData = localStorage.getItem(MONTHLY_DATA_STORAGE_KEY);
@@ -75,129 +74,111 @@ interface FinanceProviderProps {
 
 export const FinanceProvider: React.FC<FinanceProviderProps> = ({ children }) => {
   const { user, isAuthenticated } = useAuth();
-  
-  // Get current date for initial month/year
+
   const now = new Date();
-  
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [targets, setTargets] = useState<Target[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  
-  // Initialize summary with stored value if available
   const [summary, setSummary] = useState<DashboardSummary>(() => {
     return getStoredSummary() || {
       totalIncome: 0,
       totalExpenses: 0,
       availableBalance: 0,
-      netWorth: 0
+      netWorth: 0,
     };
   });
-  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  // Month tracking
   const [currentMonth, setCurrentMonth] = useState(now.toLocaleString('default', { month: 'long' }));
   const [currentYear, setCurrentYear] = useState(now.getFullYear());
-  
-  // Initialize monthly data with stored value if available
   const [monthlyData, setMonthlyData] = useState<Record<string, MonthData>>(() => {
     return getStoredMonthlyData() || {};
   });
-  
-  // Store summary in localStorage whenever it changes
+
   useEffect(() => {
     if (summary && summary.availableBalance !== 0) {
       try {
         localStorage.setItem(SUMMARY_STORAGE_KEY, JSON.stringify(summary));
-        console.log('Stored summary in localStorage:', summary);
       } catch (error) {
         console.error('Failed to store summary in localStorage:', error);
       }
     }
   }, [summary]);
-  
-  // Store monthly data in localStorage whenever it changes
+
   useEffect(() => {
     if (Object.keys(monthlyData).length > 0) {
       try {
         localStorage.setItem(MONTHLY_DATA_STORAGE_KEY, JSON.stringify(monthlyData));
-        console.log('Stored monthly data in localStorage');
       } catch (error) {
         console.error('Failed to store monthly data in localStorage:', error);
       }
     }
   }, [monthlyData]);
 
-  // Set the current month and year
   const setMonth = (month: number, year: number) => {
     const date = new Date(year, month);
     setCurrentMonth(date.toLocaleString('default', { month: 'long' }));
     setCurrentYear(year);
-    
-    // Load data for the selected month
     loadMonthData(month, year);
   };
 
-  // Check if a month is locked (past months are accessible, future months are locked)
   const isMonthLocked = (month: number, year: number) => {
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
-    
-    // Allow current month or past months
-    return (year > currentYear || (year === currentYear && month > currentMonth));
+    return year > currentYear || (year === currentYear && month > currentMonth);
   };
 
-  // Load data for specific month
   const loadMonthData = async (month: number, year: number) => {
     try {
       setLoading(true);
-      
       const monthKey = `${year}-${month + 1}`;
-      
-      // Check if we already have data for this month
+
       if (monthlyData[monthKey]) {
         setTransactions(monthlyData[monthKey].transactions || []);
         setTargets(monthlyData[monthKey].targets || []);
-        setSummary(monthlyData[monthKey].summary);
+        setSummary(
+          monthlyData[monthKey].summary || {
+            totalIncome: 0,
+            totalExpenses: 0,
+            availableBalance: 0,
+            netWorth: 0,
+          }
+        );
         setLoading(false);
         return;
       }
-      
-      // Get month's transactions and targets
-      const [transactionsResponse, targetsResponse] = await Promise.all([
+
+      const [transactionsResponse, targetsResponse, notificationsResponse] = await Promise.all([
         TransactionAPI.getAll(month, year),
-        TargetAPI.getAll()
+        TargetAPI.getAll(),
+        NotificationAPI.getAll(),
       ]);
-      
-      setTransactions(transactionsResponse);
-      setTargets(targetsResponse);
-      
-      // Get or calculate summary
+
+      setTransactions(transactionsResponse || []);
+      setTargets(targetsResponse || []);
+      setNotifications(notificationsResponse || []);
+
       let monthlySummary;
       try {
         monthlySummary = await MonthlyDataAPI.getMonthlySummary(month, year);
       } catch (err) {
-        // If API fails, calculate locally
-        monthlySummary = calculateSummaryData(transactionsResponse);
+        console.error('Error fetching monthly summary:', err);
+        monthlySummary = calculateSummaryData(transactionsResponse || []);
       }
-      
+
       setSummary(monthlySummary);
-      
-      // Store monthly data
-      setMonthlyData(prev => ({
+
+      setMonthlyData((prev) => ({
         ...prev,
         [monthKey]: {
-          transactions: transactionsResponse,
-          targets: targetsResponse,
-          summary: monthlySummary
-        }
+          transactions: transactionsResponse || [],
+          targets: targetsResponse || [],
+          summary: monthlySummary,
+        },
       }));
 
-      // Check for notifications based on targets
-      checkTargets(transactionsResponse, targetsResponse);
-      
+      checkTargets(transactionsResponse || [], targetsResponse || []);
     } catch (err) {
       console.error('Error loading month data:', err);
       setError('Failed to load data for selected month');
@@ -205,56 +186,46 @@ export const FinanceProvider: React.FC<FinanceProviderProps> = ({ children }) =>
       setLoading(false);
     }
   };
-  
-  // Calculate summary data from transactions
+
   const calculateSummaryData = (transactionsData: Transaction[]): DashboardSummary => {
-    // Fix: Convert string values to numbers and handle NaN
     const totalIncome = transactionsData
-      .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + (isNaN(Number(t.amount)) ? 0 : Number(t.amount)), 0);
-      
+      .filter((t) => t.type === 'income' && t.amount > 0)
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+
     const totalExpenses = transactionsData
-      .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + (isNaN(Number(t.amount)) ? 0 : Number(t.amount)), 0);
-      
+      .filter((t) => t.type === 'expense' && t.amount > 0)
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+
     const availableBalance = totalIncome - totalExpenses;
-    
-    // This would be replaced by a real net worth calculation from the API
-    // For now, we'll use the available balance as a base
     const netWorth = availableBalance;
-    
+
     return {
       totalIncome,
       totalExpenses,
       availableBalance,
-      netWorth
+      netWorth,
     };
   };
 
-  // Fetch data when user changes or month/year changes
   useEffect(() => {
     if (!isAuthenticated) {
-      // If not authenticated, don't load any data
       setTransactions([]);
       setTargets([]);
+      setNotifications([]);
       setSummary({
         totalIncome: 0,
         totalExpenses: 0,
         availableBalance: 0,
-        netWorth: 0
+        netWorth: 0,
       });
       setLoading(false);
       return;
     }
-    
+
     const fetchData = async () => {
       try {
         setLoading(true);
-        
-        // Get month number from name
         const monthNumber = new Date(Date.parse(`${currentMonth} 1, ${currentYear}`)).getMonth();
-        
-        // Load data for the current month
         await loadMonthData(monthNumber, currentYear);
       } catch (err) {
         setError('Failed to fetch data');
@@ -263,368 +234,338 @@ export const FinanceProvider: React.FC<FinanceProviderProps> = ({ children }) =>
         setLoading(false);
       }
     };
-    
+
     fetchData();
   }, [isAuthenticated, user, currentMonth, currentYear]);
 
-  // Check if targets are exceeded and create notifications
-  const checkTargets = (transactions: Transaction[], targets: Target[]) => {
-    const newNotifications: Notification[] = [];
-    
-    // Check each target against the transactions
-    targets.forEach(target => {
-      // Get target creation date
-      const targetCreationDate = target.createdAt ? new Date(target.createdAt) : new Date();
-      
-      // Only consider transactions that happened after the target was created
-      const relevantTransactions = transactions.filter(t => {
-        const transactionDate = new Date(t.date);
-        return transactionDate >= targetCreationDate;
-      });
-      
-      // Calculate progress based on target category
-      let currentAmount = 0;
-      
-      if (target.category === 'income') {
-        // For income targets, only count income transactions
-        currentAmount = relevantTransactions
-          .filter(t => t.type === 'income')
-          .reduce((sum, t) => sum + t.amount, 0);
-      } else {
-        // For expense targets, only count expense transactions
-        currentAmount = relevantTransactions
-          .filter(t => t.type === 'expense')
-          .reduce((sum, t) => sum + t.amount, 0);
+  const checkTargets = async (transactions: Transaction[], targets: Target[]) => {
+    if (!Array.isArray(targets) || !Array.isArray(transactions)) {
+      console.warn('Invalid input: targets or transactions is not an array:', { targets, transactions });
+      return;
+    }
+
+    const newNotifications: Omit<Notification, 'id' | 'isRead' | 'createdAt' | 'userId'>[] = [];
+
+    targets.forEach((target) => {
+      if (!target.targetAmount || !['income', 'expense'].includes(target.type)) {
+        console.warn('Invalid target:', target);
+        return;
       }
-      
-      // Calculate progress percentage
-      const progress = (currentAmount / target.amount) * 100;
-      
-      // Check thresholds and create notifications
-      if (target.category === 'income' && currentAmount >= target.amount) {
+
+      const progress = target.targetAmount > 0 ? (target.currentAmount / target.targetAmount) * 100 : 0;
+
+      if (target.type === 'income' && target.currentAmount >= target.targetAmount) {
         newNotifications.push({
-          id: crypto.randomUUID(),
-          message: `Congratulations! You've reached your income target of ${formatCurrency(target.amount)}`,
+          title: 'Income Goal Achieved',
+          message: `Congratulations! You've reached your income target of ${formatCurrency(target.targetAmount)} for ${target.category}`,
           type: 'success',
-          read: false
         });
-      } else if (target.category === 'expense' && currentAmount >= target.amount) {
+      } else if (target.type === 'expense' && target.currentAmount >= target.targetAmount) {
         newNotifications.push({
-          id: crypto.randomUUID(),
-          message: `Warning! You've exceeded your expense limit of ${formatCurrency(target.amount)}`,
+          title: 'Expense Limit Exceeded',
+          message: `Warning! You've exceeded your expense limit of ${formatCurrency(target.targetAmount)} for ${target.category}`,
           type: 'warning',
-          read: false
         });
       } else if (progress >= 80 && progress < 100) {
         newNotifications.push({
-          id: crypto.randomUUID(),
-          message: `${target.category === 'income' ? 'You\'re getting close' : 'Warning!'} You're at ${progress.toFixed(1)}% of your ${target.category} target (${formatCurrency(target.amount)})`,
-          type: target.category === 'income' ? 'success' : 'info',
-          read: false
+          title: target.type === 'income' ? 'Approaching Income Goal' : 'Approaching Expense Limit',
+          message: `${target.type === 'income' ? "You're close to reaching" : 'Warning!'} You're at ${Math.min(progress, 100).toFixed(1)}% of your ${target.type} target (${formatCurrency(target.targetAmount)}) for ${target.category}`,
+          type: target.type === 'income' ? 'success' : 'info',
         });
       }
     });
-    
+
     if (newNotifications.length > 0) {
-      setNotifications(prev => [...prev, ...newNotifications]);
+      try {
+        await Promise.all(
+          newNotifications.map((notification) => NotificationAPI.create(notification))
+        );
+        const updatedNotifications = await NotificationAPI.getAll();
+        setNotifications(updatedNotifications);
+      } catch (error) {
+        console.error('Error saving notifications:', error);
+        setError('Failed to save notifications');
+      }
     }
   };
 
-  // Format currency helper
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
-    }).format(amount);
+      currency: 'USD',
+    }).format(amount || 0);
   };
 
-  // Add a new transaction
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     try {
       setLoading(true);
-      
-      // Use transaction's month and year to update the correct monthly data
-      const transactionMonth = transaction.month;
-      const transactionYear = transaction.year || currentYear;
+      if (transaction.amount <= 0) throw new Error('Transaction amount must be greater than 0');
+      if (!['income', 'expense'].includes(transaction.type)) throw new Error('Invalid transaction type');
+
+      const transactionDate = new Date(transaction.date);
+      const transactionMonth = transactionDate.getMonth();
+      const transactionYear = transactionDate.getFullYear();
+
+      const newTransactionPayload = {
+        ...transaction,
+        amount: Number(transaction.amount),
+        month: transactionMonth,
+        year: transactionYear,
+      };
+
+      const newTransaction = await TransactionAPI.create(newTransactionPayload);
+
       const monthKey = `${transactionYear}-${transactionMonth + 1}`;
-      
-      // Current month key (for the displayed UI)
       const currentMonthIndex = new Date(Date.parse(`${currentMonth} 1, ${currentYear}`)).getMonth();
       const currentMonthKey = `${currentYear}-${currentMonthIndex + 1}`;
-      
-      console.log('Adding transaction:', transaction);
-      console.log('For month/year:', transactionMonth, transactionYear);
-      console.log('Current month/index/year:', currentMonth, currentMonthIndex, currentYear);
-      console.log('monthKey vs currentMonthKey:', monthKey, currentMonthKey);
-      
-      // Call API to add transaction
-      const newTransaction = await TransactionAPI.create(transaction);
-      console.log('New transaction created:', newTransaction);
-      
-      // Update local state if the transaction belongs to the current displayed month
-      if (monthKey === currentMonthKey) {
-        const updatedTransactions = [...transactions, newTransaction];
-        setTransactions(updatedTransactions);
-        
-        // Update summary for current month - do this IMMEDIATELY
-        const updatedSummary = calculateSummaryData(updatedTransactions);
-        console.log('Updating summary to:', updatedSummary);
-        setSummary(updatedSummary);
-        
-        // Re-check targets for current month with the updated transaction data
-        checkTargets(updatedTransactions, targets);
-        
-        // Force an immediate evaluation of all targets to update progress bars
-        // This ensures the target progress is recalculated right after adding a transaction
-        const updatedTargets = [...targets];
-        setTargets(updatedTargets);
-      }
-      
-      // Always update monthly data for the transaction's month
-      setMonthlyData(prev => {
-        // Get the existing monthly data or create empty structure
+
+      setTransactions((prev) => {
+        const updatedTransactions = [...prev, newTransaction].filter((t) => t.amount > 0);
+        if (monthKey === currentMonthKey) {
+          const updatedSummary = calculateSummaryData(updatedTransactions);
+          setSummary(updatedSummary);
+        }
+        return updatedTransactions;
+      });
+
+      setMonthlyData((prev) => {
         const existingMonthData = prev[monthKey] || {
           transactions: [],
-          targets: [],
-          summary: {
-            totalIncome: 0,
-            totalExpenses: 0,
-            availableBalance: 0, 
-            netWorth: 0
-          }
+          targets: targets || [],
+          summary: { totalIncome: 0, totalExpenses: 0, availableBalance: 0, netWorth: 0 },
         };
-        
-        // Add the new transaction to this month's data
-        const updatedTransactions = [...(existingMonthData.transactions || []), newTransaction];
-        
-        // Calculate updated summary for this month
+        const updatedTransactions = [...(existingMonthData.transactions || []), newTransaction].filter(
+          (t) => t.amount > 0
+        );
         const updatedSummary = calculateSummaryData(updatedTransactions);
-        
         return {
           ...prev,
-          [monthKey]: {
-            ...existingMonthData,
-            transactions: updatedTransactions,
-            summary: updatedSummary
-          }
+          [monthKey]: { ...existingMonthData, transactions: updatedTransactions, summary: updatedSummary },
         };
       });
+
+      const updatedTargets = await TargetAPI.getAll();
+      setTargets(updatedTargets);
+      setMonthlyData((prev) => ({
+        ...prev,
+        [monthKey]: { ...prev[monthKey], targets: updatedTargets },
+      }));
+      checkTargets([...transactions, newTransaction], updatedTargets);
     } catch (err) {
       setError('Failed to add transaction');
       console.error('Error adding transaction:', err);
+      throw err;
     } finally {
       setLoading(false);
     }
   };
 
-  // Delete a transaction
   const deleteTransaction = async (id: string) => {
     try {
       setLoading(true);
-      
-      // Find the transaction to be deleted
-      const deletedTransaction = transactions.find(t => t.id === id);
-      
+      const deletedTransaction = transactions.find((t) => t.id === id);
       if (!deletedTransaction) {
         console.error('Transaction not found for deletion:', id);
         return;
       }
-      
-      // API call to delete transaction
+
       await TransactionAPI.delete(id);
-      
-      console.log('Deleting transaction:', deletedTransaction);
-      
-      // Determine which month's data needs to be updated
+
       const transactionMonth = deletedTransaction.month;
       const transactionYear = deletedTransaction.year || currentYear;
       const monthKey = `${transactionYear}-${transactionMonth + 1}`;
-      
-      // Current month key (for the displayed UI)
       const currentMonthIndex = new Date(Date.parse(`${currentMonth} 1, ${currentYear}`)).getMonth();
       const currentMonthKey = `${currentYear}-${currentMonthIndex + 1}`;
-      
-      console.log('Transaction month/year:', transactionMonth, transactionYear);
-      console.log('Current month/index/year:', currentMonth, currentMonthIndex, currentYear);
-      console.log('monthKey vs currentMonthKey:', monthKey, currentMonthKey);
-      
-      // Update local state if the transaction belongs to the current displayed month
-      if (monthKey === currentMonthKey) {
-        const updatedTransactions = transactions.filter(t => t.id !== id);
-        setTransactions(updatedTransactions);
-        
-        // Update summary for current month - do this IMMEDIATELY 
-        const updatedSummary = calculateSummaryData(updatedTransactions);
-        console.log('Updating summary to:', updatedSummary);
-        setSummary(updatedSummary);
-        
-        // Re-check targets for current month
-        checkTargets(updatedTransactions, targets);
-      }
-      
-      // Always update monthly data for the transaction's month
-      setMonthlyData(prev => {
-        // Get the existing monthly data
+
+      setTransactions((prev) => {
+        const updatedTransactions = prev.filter((t) => t.id !== id);
+        if (monthKey === currentMonthKey) {
+          const updatedSummary = calculateSummaryData(updatedTransactions);
+          setSummary(updatedSummary);
+        }
+        return updatedTransactions;
+      });
+
+      setMonthlyData((prev) => {
         const existingMonthData = prev[monthKey];
-        
         if (!existingMonthData) {
           console.error('Monthly data not found for the transaction:', monthKey);
           return prev;
         }
-        
-        // Remove the transaction from this month's data
-        const updatedTransactions = existingMonthData.transactions.filter(t => t.id !== id);
-        
-        // Calculate updated summary for this month
+        const updatedTransactions = existingMonthData.transactions.filter((t) => t.id !== id);
         const updatedSummary = calculateSummaryData(updatedTransactions);
-        
         return {
           ...prev,
-          [monthKey]: {
-            ...existingMonthData,
-            transactions: updatedTransactions,
-            summary: updatedSummary
-          }
+          [monthKey]: { ...existingMonthData, transactions: updatedTransactions, summary: updatedSummary },
         };
       });
-      
+
+      const updatedTargets = await TargetAPI.getAll();
+      setTargets(updatedTargets);
+      setMonthlyData((prev) => ({
+        ...prev,
+        [monthKey]: { ...prev[monthKey], targets: updatedTargets },
+      }));
+      checkTargets(transactions.filter((t) => t.id !== id), updatedTargets);
     } catch (err) {
       setError('Failed to delete transaction');
       console.error('Error deleting transaction:', err);
+      throw err;
     } finally {
       setLoading(false);
     }
   };
 
-  // Add a new target
-  const addTarget = async (target: Omit<Target, 'id'>) => {
+  const addTarget = async (target: Omit<Target, 'id' | 'userId' | 'currentAmount' | 'createdAt' | 'updatedAt'>) => {
     try {
       setLoading(true);
-      const monthKey = `${currentYear}-${new Date(Date.parse(`${currentMonth} 1, ${currentYear}`)).getMonth() + 1}`;
-      
-      // API call to add target
-      const newTarget = await TargetAPI.create(target);
-      
-      // Update local state
-      const updatedTargets = [...targets, newTarget];
+      if (!target.targetAmount || !['income', 'expense'].includes(target.type)) {
+        throw new Error('Invalid target: amount and valid type are required');
+      }
+
+      const targetPayload = {
+        category: target.category,
+        type: target.type,
+        targetAmount: Number(target.targetAmount),
+      };
+
+      const newTarget = await TargetAPI.create(targetPayload);
+      const updatedTargets = [...targets, newTarget].filter(
+        (t) => t.targetAmount > 0 && ['income', 'expense'].includes(t.type)
+      );
       setTargets(updatedTargets);
-      
-      // Update monthly data
-      setMonthlyData(prev => ({
+
+      const monthKey = `${currentYear}-${new Date(Date.parse(`${currentMonth} 1, ${currentYear}`)).getMonth() + 1}`;
+      setMonthlyData((prev) => ({
         ...prev,
-        [monthKey]: {
-          ...prev[monthKey],
-          targets: updatedTargets
-        }
+        [monthKey]: { ...prev[monthKey], targets: updatedTargets },
       }));
-      
-      // Check targets after adding a new one
+
       checkTargets(transactions, updatedTargets);
     } catch (err) {
       setError('Failed to add target');
       console.error('Error adding target:', err);
+      throw err;
     } finally {
       setLoading(false);
     }
   };
 
-  // Update a target
   const updateTarget = async (id: string, target: Partial<Target>) => {
     try {
       setLoading(true);
-      const monthKey = `${currentYear}-${new Date(Date.parse(`${currentMonth} 1, ${currentYear}`)).getMonth() + 1}`;
-      
-      // API call to update target
-      const updatedTarget = await TargetAPI.update(id, target);
-      
-      // Update local state
-      const updatedTargets = targets.map(t => t.id === id ? updatedTarget : t);
+      const targetPayload = {
+        category: target.category,
+        type: target.type,
+        targetAmount: Number(target.targetAmount),
+      };
+      if (!targetPayload.targetAmount || !['income', 'expense'].includes(targetPayload.type)) {
+        throw new Error('Invalid target: amount and valid type are required');
+      }
+
+      const updatedTarget = await TargetAPI.update(id, targetPayload);
+      const updatedTargets = targets
+        .map((t) => (t.id === id ? updatedTarget : t))
+        .filter((t) => t.targetAmount > 0 && ['income', 'expense'].includes(t.type));
       setTargets(updatedTargets);
-      
-      // Update monthly data
-      setMonthlyData(prev => ({
+
+      const monthKey = `${currentYear}-${new Date(Date.parse(`${currentMonth} 1, ${currentYear}`)).getMonth() + 1}`;
+      setMonthlyData((prev) => ({
         ...prev,
-        [monthKey]: {
-          ...prev[monthKey],
-          targets: updatedTargets
-        }
+        [monthKey]: { ...prev[monthKey], targets: updatedTargets },
       }));
-      
-      // Re-check targets
+
       checkTargets(transactions, updatedTargets);
     } catch (err) {
       setError('Failed to update target');
       console.error('Error updating target:', err);
+      throw err;
     } finally {
       setLoading(false);
     }
   };
 
-  // Delete a target
   const deleteTarget = async (id: string) => {
     try {
       setLoading(true);
-      const monthKey = `${currentYear}-${new Date(Date.parse(`${currentMonth} 1, ${currentYear}`)).getMonth() + 1}`;
-      
-      // API call to delete target
       await TargetAPI.delete(id);
-      
-      // Update local state
-      const updatedTargets = targets.filter(t => t.id !== id);
+      const updatedTargets = targets.filter((t) => t.id !== id);
       setTargets(updatedTargets);
-      
-      // Update monthly data
-      setMonthlyData(prev => ({
+
+      const monthKey = `${currentYear}-${new Date(Date.parse(`${currentMonth} 1, ${currentYear}`)).getMonth() + 1}`;
+      setMonthlyData((prev) => ({
         ...prev,
-        [monthKey]: {
-          ...prev[monthKey],
-          targets: updatedTargets
-        }
+        [monthKey]: { ...prev[monthKey], targets: updatedTargets },
       }));
-      
-      // Re-check targets
+
       checkTargets(transactions, updatedTargets);
     } catch (err) {
       setError('Failed to delete target');
       console.error('Error deleting target:', err);
+      throw err;
     } finally {
       setLoading(false);
     }
   };
 
-  // Mark a notification as read
-  const markNotificationAsRead = (id: string) => {
-    setNotifications(prev => 
-      prev.map(notification => 
-        notification.id === id 
-          ? { ...notification, read: true } 
-          : notification
-      )
-    );
+  const markNotificationAsRead = async (id: string | number) => {
+    try {
+      const updatedNotification = await NotificationAPI.markAsRead(id);
+      setNotifications((prev) =>
+        prev.map((notification) =>
+          notification.id === id ? { ...notification, isRead: updatedNotification.isRead } : notification
+        )
+      );
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      setError('Failed to mark notification as read');
+    }
   };
 
-  const value = {
-    transactions,
-    targets,
-    notifications,
-    summary,
-    loading,
-    error,
-    currentMonth,
-    currentYear,
-    monthlyData,
-    setMonth,
-    isMonthLocked,
-    addTransaction,
-    deleteTransaction,
-    addTarget,
-    updateTarget,
-    deleteTarget,
-    markNotificationAsRead
+  const deleteNotification = async (id: string | number) => {
+    try {
+      await NotificationAPI.delete(id);
+      setNotifications((prev) => prev.filter((notification) => notification.id !== id));
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      setError('Failed to delete notification');
+    }
+  };
+
+  const clearReadNotifications = async () => {
+    try {
+      await NotificationAPI.deleteRead();
+      setNotifications((prev) => prev.filter((notification) => !notification.isRead));
+    } catch (error) {
+      console.error('Error clearing read notifications:', error);
+      setError('Failed to clear read notifications');
+    }
   };
 
   return (
-    <FinanceContext.Provider value={value}>
+    <FinanceContext.Provider
+      value={{
+        transactions,
+        targets,
+        notifications,
+        summary,
+        loading,
+        error,
+        currentMonth,
+        currentYear,
+        monthlyData,
+        setMonth,
+        isMonthLocked,
+        addTransaction,
+        deleteTransaction,
+        addTarget,
+        updateTarget,
+        deleteTarget,
+        markNotificationAsRead,
+        deleteNotification,
+        clearReadNotifications,
+      }}
+    >
       {children}
     </FinanceContext.Provider>
   );
