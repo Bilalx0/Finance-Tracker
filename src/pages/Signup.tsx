@@ -134,21 +134,29 @@ const Signup: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-dark p-4 font-josefin">
-      <div className="max-w-md w-full space-y-8 bg-dark.light p-8 rounded-lg shadow-lg">
+    <div className="min-h-screen flex items-center justify-center bg-dark px-4 sm:px-6 lg:px-8 font-josefin my-16">
+      <div className="w-full max-w-md space-y-8 bg-dark.light p-6 sm:p-8 rounded-xl shadow-2xl border-gray-600 border">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-white">Finance Tracker</h1>
-          <h2 className="mt-2 text-xl font-medium text-gray-300">Create your account</h2>
+          <h1 className="text-3xl font-bold text-white tracking-tight">Finance Tracker</h1>
+          <h2 className="mt-2 text-lg font-medium text-gray-300">Create your account</h2>
         </div>
 
         {error && (
-          <div className="bg-red-500 bg-opacity-20 text-white p-3 rounded-md text-sm">
+          <div
+            className="bg-red-500/20 text-red-100 p-4 rounded-md text-sm"
+            role="alert"
+            aria-live="assertive"
+          >
             {error}
           </div>
         )}
 
         {qualityWarning && (
-          <div className="bg-yellow-500 bg-opacity-20 text-white p-3 rounded-md text-sm">
+          <div
+            className="bg-yellow-500/20 text-yellow-100 p-4 rounded-md text-sm"
+            role="alert"
+            aria-live="polite"
+          >
             {qualityWarning}
           </div>
         )}
@@ -156,7 +164,9 @@ const Signup: React.FC = () => {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="username" className="sr-only">Username</label>
+              <label htmlFor="username" className="sr-only">
+                Username
+              </label>
               <input
                 id="username"
                 name="username"
@@ -165,13 +175,15 @@ const Signup: React.FC = () => {
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-700 rounded-md bg-dark focus:outline-none focus:ring-2 focus:ring-primary text-white"
+                className="w-full px-4 py-2.5 border border-gray-700 rounded-md bg-dark text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
                 placeholder="Username"
               />
             </div>
 
             <div>
-              <label htmlFor="email" className="sr-only">Email address</label>
+              <label htmlFor="email" className="sr-only">
+                Email address
+              </label>
               <input
                 id="email"
                 name="email"
@@ -180,13 +192,15 @@ const Signup: React.FC = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-700 rounded-md bg-dark focus:outline-none focus:ring-2 focus:ring-primary text-white"
+                className="w-full px-4 py-2.5 border border-gray-700 rounded-md bg-dark text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
                 placeholder="Email address"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="sr-only">Password</label>
+              <label htmlFor="password" className="sr-only">
+                Password
+              </label>
               <input
                 id="password"
                 name="password"
@@ -195,13 +209,15 @@ const Signup: React.FC = () => {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-700 rounded-md bg-dark focus:outline-none focus:ring-2 focus:ring-primary text-white"
+                className="w-full px-4 py-2.5 border border-gray-700 rounded-md bg-dark text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
                 placeholder="Password"
               />
             </div>
 
             <div>
-              <label htmlFor="confirm-password" className="sr-only">Confirm Password</label>
+              <label htmlFor="confirm-password" className="sr-only">
+                Confirm Password
+              </label>
               <input
                 id="confirm-password"
                 name="confirmPassword"
@@ -210,23 +226,50 @@ const Signup: React.FC = () => {
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-700 rounded-md bg-dark focus:outline-none focus:ring-2 focus:ring-primary text-white"
+                className="w-full px-4 py-2.5 border border-gray-700 rounded-md bg-dark text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
                 placeholder="Confirm Password"
               />
             </div>
 
             <div>
-              <label htmlFor="avatar" className="sr-only">Avatar</label>
-              <input
-                id="avatar"
-                name="avatar"
-                type="file"
-                accept="image/png,image/jpeg"
-                required
-                onChange={handleAvatarChange}
-                className="w-full px-3 py-2 border border-gray-700 rounded-md bg-dark focus:outline-none focus:ring-2 focus:ring-primary text-white"
-              />
-              {avatar && <p className="text-sm text-gray-400 mt-1">Selected: {avatar.name}</p>}
+              <label htmlFor="avatar" className="block text-sm font-medium text-gray-300 mb-2">
+                Profile Picture
+              </label>
+              <div className="flex items-center justify-center w-full">
+                <label
+                  htmlFor="avatar"
+                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-700 border-dashed rounded-md bg-dark hover:bg-gray-800 cursor-pointer transition-colors"
+                >
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <svg
+                      className="w-8 h-8 mb-3 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M7 16V12m0 0V8m0 4h4m0 0h4m-4 0V8m0 4v4m10-4H3m18 0a9 9 0 11-18 0 9 9 0 0118 0z"
+                      ></path>
+                    </svg>
+                    <p className="text-sm text-gray-400">
+                      {avatar ? avatar.name : 'Upload a PNG or JPEG image'}
+                    </p>
+                  </div>
+                  <input
+                    id="avatar"
+                    name="avatar"
+                    type="file"
+                    accept="image/png,image/jpeg"
+                    required
+                    onChange={handleAvatarChange}
+                    className="hidden"
+                  />
+                </label>
+              </div>
             </div>
           </div>
 
@@ -234,7 +277,9 @@ const Signup: React.FC = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+              className={`w-full py-2.5 px-4 rounded-md text-sm font-medium text-white bg-primary hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors ${
+                isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+              }`}
             >
               {isSubmitting ? 'Creating account...' : 'Sign up'}
             </button>
@@ -242,7 +287,7 @@ const Signup: React.FC = () => {
 
           <div className="text-center text-sm">
             <span className="text-gray-400">Already have an account? </span>
-            <Link to="/login" className="font-medium text-primary hover:text-blue-400">
+            <Link to="/login" className="font-medium text-primary hover:text-blue-400 transition-colors">
               Sign in
             </Link>
           </div>
