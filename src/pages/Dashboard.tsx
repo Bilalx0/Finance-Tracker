@@ -10,7 +10,6 @@ import TransactionModal from '../components/TransactionModal';
 const Dashboard: React.FC = () => {
   const { transactions, summary, currentMonth, currentYear, isMonthLocked, setMonth } = useFinance();
   const { user } = useAuth();
-  // const navigate = useNavigate();
   const { id: monthId } = useParams<{ id?: string }>();
   
   const [selectedPeriod, setSelectedPeriod] = useState<'day' | 'week' | 'month' | 'year'>('month');
@@ -51,19 +50,24 @@ const Dashboard: React.FC = () => {
   // Current month index
   const currentMonthIndex = monthNameToIndex[currentMonth];
   
+  // Ensure summary values are numbers and handle NaN cases
+  const safeSummary = {
+    totalIncome: Number(summary?.totalIncome) || 0,
+    totalExpenses: Number(summary?.totalExpenses) || 0,
+    availableBalance: Number(summary?.totalIncome) - Number(summary?.totalExpenses) || 0,
+    netWorth: Number(summary?.totalIncome) - Number(summary?.totalExpenses) || 0, // Adjust based on actual net worth logic
+  };
+
   // Generate real chart data based on actual transactions
   const lineChartData = useMemo(() => {
-    // Create arrays for all 12 months with zero values
     const monthlyIncome = Array(12).fill(0);
     const monthlyExpenses = Array(12).fill(0);
     
-    // Group transactions by month and type
     transactions.forEach(transaction => {
       const date = new Date(transaction.date);
       const month = date.getMonth();
       const year = date.getFullYear();
       
-      // Only count transactions from the current year
       if (year === currentYear) {
         if (transaction.type === 'income') {
           monthlyIncome[month] += transaction.amount;
@@ -79,7 +83,7 @@ const Dashboard: React.FC = () => {
         {
           label: 'Income',
           data: monthlyIncome,
-          borderColor: '#10b981', // green
+          borderColor: '#10b981',
           backgroundColor: 'rgba(16, 185, 129, 0.1)',
           fill: true,
           tension: 0.4
@@ -87,7 +91,7 @@ const Dashboard: React.FC = () => {
         {
           label: 'Expenses',
           data: monthlyExpenses,
-          borderColor: '#ef4444', // red
+          borderColor: '#ef4444',
           backgroundColor: 'rgba(239, 68, 68, 0.1)',
           fill: true,
           tension: 0.4
@@ -108,14 +112,7 @@ const Dashboard: React.FC = () => {
     labels: Object.keys(incomeCategories),
     datasets: [{
       data: Object.values(incomeCategories),
-      backgroundColor: [
-        '#10b981', // green
-        '#3b82f6', // blue
-        '#8b5cf6', // purple
-        '#f59e0b', // amber
-        '#ec4899', // pink
-        '#6b7280'  // gray
-      ],
+      backgroundColor: ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ec4899', '#6b7280'],
       borderWidth: 1,
     }]
   };
@@ -132,18 +129,7 @@ const Dashboard: React.FC = () => {
     labels: Object.keys(expenseCategories),
     datasets: [{
       data: Object.values(expenseCategories),
-      backgroundColor: [
-        '#7c3aed', // violet
-        '#ef4444', // red
-        '#f97316', // orange
-        '#0ea5e9', // sky
-        '#84cc16', // lime
-        '#14b8a6', // teal
-        '#ec4899', // pink
-        '#8b5cf6', // purple
-        '#64748b', // slate
-        '#6b7280'  // gray
-      ],
+      backgroundColor: ['#7c3aed', '#ef4444', '#f97316', '#0ea5e9', '#84cc16', '#14b8a6', '#ec4899', '#8b5cf6', '#64748b', '#6b7280'],
       borderWidth: 1,
     }]
   };
@@ -153,12 +139,7 @@ const Dashboard: React.FC = () => {
     labels: ['Gold', 'Stocks', 'Land', 'Warehouse'],
     datasets: [{
       data: [15700, 22500, 120000, 135000],
-      backgroundColor: [
-        '#f59e0b', // amber
-        '#ef4444', // red
-        '#10b981', // green
-        '#8b5cf6'  // purple
-      ],
+      backgroundColor: ['#f59e0b', '#ef4444', '#10b981', '#8b5cf6'],
       borderWidth: 1,
     }]
   };
@@ -170,7 +151,6 @@ const Dashboard: React.FC = () => {
   
   return (
     <div className="flex-1 overflow-y-auto p-3 sm:p-6 relative">
-      {/* Month header */}
       <div className="mb-6 flex flex-wrap items-center justify-between">
         <h1 className="text-2xl font-bold text-white">
           {currentMonth} {currentYear}
@@ -190,7 +170,6 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Floating action buttons for adding transactions - only show for unlocked months */}
       {!isMonthLocked(currentMonthIndex, currentYear) && (
         <div className="fixed bottom-6 right-6 flex flex-col space-y-4 z-10">
           <button 
@@ -214,18 +193,16 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Transaction Modal */}
       <TransactionModal 
         isOpen={isModalOpen} 
         onClose={closeModal} 
         initialType={modalType}
       />
 
-      {/* Stats Cards Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-3 sm:mb-6">
         <StatsCard
           title="Total Income"
-          value={summary.totalIncome}
+          value={safeSummary.totalIncome}
           icon={
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -236,7 +213,7 @@ const Dashboard: React.FC = () => {
         
         <StatsCard
           title="Total Expenses"
-          value={summary.totalExpenses}
+          value={safeSummary.totalExpenses}
           icon={
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -247,7 +224,7 @@ const Dashboard: React.FC = () => {
         
         <StatsCard
           title="Available Balance"
-          value={summary.availableBalance}
+          value={safeSummary.availableBalance}
           icon={
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
@@ -258,7 +235,7 @@ const Dashboard: React.FC = () => {
         
         <StatsCard
           title="Net Worth"
-          value={summary.netWorth}
+          value={safeSummary.netWorth}
           icon={
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -268,7 +245,6 @@ const Dashboard: React.FC = () => {
         />
       </div>
       
-      {/* Income and Expense Chart */}
       <div className="card mb-3 sm:mb-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
           <h2 className="text-xl font-semibold">Income & Expenses</h2>
@@ -303,9 +279,7 @@ const Dashboard: React.FC = () => {
         <LineChart data={lineChartData} height={300} />
       </div>
       
-      {/* Categories and Assets */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 mb-3 sm:mb-6">
-        {/* Income Categories */}
         <div className="card">
           <h2 className="text-lg font-semibold mb-4">Income Categories</h2>
           <div className="relative">
@@ -313,7 +287,7 @@ const Dashboard: React.FC = () => {
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
                 <p className="text-sm text-gray-400">Total</p>
-                <p className="text-xl font-semibold">${summary.totalIncome.toLocaleString()}</p>
+                <p className="text-xl font-semibold">${safeSummary.totalIncome.toLocaleString()}</p>
               </div>
             </div>
           </div>
@@ -334,7 +308,6 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
         
-        {/* Expense Categories */}
         <div className="card">
           <h2 className="text-lg font-semibold mb-4">Expense Categories</h2>
           <div className="relative">
@@ -342,7 +315,7 @@ const Dashboard: React.FC = () => {
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
                 <p className="text-sm text-gray-400">Total</p>
-                <p className="text-xl font-semibold">${summary.totalExpenses.toLocaleString()}</p>
+                <p className="text-xl font-semibold">${safeSummary.totalExpenses.toLocaleString()}</p>
               </div>
             </div>
           </div>
@@ -363,7 +336,6 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
         
-        {/* Assets */}
         <div className="card">
           <h2 className="text-lg font-semibold mb-4">Asset Allocation</h2>
           <div className="relative">
@@ -393,7 +365,6 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
       
-      {/* Latest Transactions */}
       <div className="card">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Latest Transactions</h2>
@@ -456,7 +427,6 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
       
-      {/* Month lock information - display warning for locked months */}
       {isMonthLocked(currentMonthIndex, currentYear) && (
         <div className="mt-6 bg-gray-800 bg-opacity-50 rounded-lg p-4 text-center">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mx-auto mb-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">

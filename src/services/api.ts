@@ -49,7 +49,6 @@ export const AuthAPI = {
         });
         localStorage.setItem('financeTrackerToken', response.data.token);
         localStorage.setItem('financeTrackerUser', JSON.stringify(response.data.user));
-        // Verify storage
         console.log('Stored token:', localStorage.getItem('financeTrackerToken')?.slice(0, 10) + '...');
         console.log('Stored user:', localStorage.getItem('financeTrackerUser'));
       } else {
@@ -95,16 +94,12 @@ export const AuthAPI = {
       console.log('Error status:', error.response?.status);
       if (error.response?.status === 401) {
         console.log('401 - Token likely expired or invalid');
-        // Avoid clearing localStorage here to preserve token for debugging
-        // localStorage.removeItem('financeTrackerToken');
-        // localStorage.removeItem('financeTrackerUser');
       }
       return null;
     }
   },
 };
 
-// Transaction API
 export const TransactionAPI = {
   getAll: async (month?: number, year?: number): Promise<Transaction[]> => {
     try {
@@ -147,7 +142,6 @@ export const TransactionAPI = {
   },
 };
 
-// Target API
 export const TargetAPI = {
   getAll: async (): Promise<Target[]> => {
     try {
@@ -191,11 +185,12 @@ export const TargetAPI = {
   },
 };
 
-// Monthly data API
 export const MonthlyDataAPI = {
   getMonthlySummary: async (month: number, year: number): Promise<DashboardSummary> => {
     try {
-      return apiHelpers.get<DashboardSummary>(`/monthly-data/${year}/${month + 1}/summary`);
+      // Updated to use query parameters instead of path parameters
+      const params = { year, month: month + 1 }; // month + 1 because month is zero-based
+      return apiHelpers.get<DashboardSummary>('/monthly-data/summary', params);
     } catch (error) {
       console.error('Get monthly summary error:', error);
       throw error;

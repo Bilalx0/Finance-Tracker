@@ -1,171 +1,131 @@
-import React, { useState } from 'react';
-import { 
-  AppBar, 
-  Toolbar, 
-  Typography, 
-  IconButton, 
-  InputBase, 
-  Badge,
-  Drawer,
-  Box,
-  alpha,
-  styled
-} from '@mui/material';
-import { 
-  Search as SearchIcon, 
-  Notifications as NotificationsIcon,
-  Message as MessageIcon,
-  Close as CloseIcon
-} from '@mui/icons-material';
-
-// Custom styled search component
-const Search = styled('div')(({ theme }) => ({
-  position: 'relative',
-  borderRadius: theme.shape.borderRadius,
-  backgroundColor: alpha(theme.palette.common.black, 0.05),
-  '&:hover': {
-    backgroundColor: alpha(theme.palette.common.black, 0.08),
-  },
-  marginRight: theme.spacing(2),
-  marginLeft: 0,
-  width: '100%',
-  [theme.breakpoints.up('sm')]: {
-    marginLeft: theme.spacing(3),
-    width: 'auto',
-  },
-}));
-
-const SearchIconWrapper = styled('div')(({ theme }) => ({
-  padding: theme.spacing(0, 2),
-  height: '100%',
-  position: 'absolute',
-  pointerEvents: 'none',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-}));
-
-const StyledInputBase = styled(InputBase)(({ theme }) => ({
-  color: 'inherit',
-  '& .MuiInputBase-input': {
-    padding: theme.spacing(1, 1, 1, 0),
-    paddingLeft: `calc(1em + ${theme.spacing(4)})`,
-    transition: theme.transitions.create('width'),
-    width: '100%',
-    [theme.breakpoints.up('md')]: {
-      width: '20ch',
-    },
-  },
-}));
-
-const ShortcutKey = styled('span')(({ theme }) => ({
-  position: 'absolute',
-  right: theme.spacing(1.5),
-  top: '50%',
-  transform: 'translateY(-50%)',
-  display: 'flex',
-  alignItems: 'center',
-  gap: '2px',
-  padding: '2px 4px',
-  borderRadius: '4px',
-  backgroundColor: alpha(theme.palette.common.black, 0.05),
-  fontSize: '0.75rem',
-  color: theme.palette.text.secondary,
-}));
+import { useState, useEffect, useRef } from "react";
+import { Bell, ChevronDown, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const { user, logout, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
-  const toggleSearchDrawer = (open: boolean) => {
-    setIsSearchOpen(open);
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth < 640);
+      if (window.innerWidth >= 640) {
+        setIsSearchOpen(false);
+      }
+    };
+
+    checkScreenSize();
+    window.addEventListener("resize", checkScreenSize);
+
+    return () => window.removeEventListener("resize", checkScreenSize);
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
 
   return (
-    <AppBar position="sticky" color='#121833' elevation={1}>
-      <Toolbar>
-        <Typography
-          variant="h6"
-          noWrap
-          component="a"
-          href="/"
-          sx={{
-            mr: 2,
-            fontWeight: 600,
-            color: 'inherit',
-            textDecoration: 'none',
-          }}
-        >
-          Finance Budget Tracker
-        </Typography>
-        
-        <Box sx={{ flexGrow: 1 }} />
-        
-        {/* Desktop Search */}
-        <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
-          <Search>
-            <SearchIconWrapper>
-              <SearchIcon fontSize="small" />
-            </SearchIconWrapper>
-            <StyledInputBase
-              placeholder="Search"
-              inputProps={{ 'aria-label': 'search' }}
-            />
-            <ShortcutKey>
-              ⌘K
-            </ShortcutKey>
-          </Search>
-        </Box>
-        
-        {/* Mobile Search Icon */}
-        <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
-          <IconButton 
-            size="large" 
-            aria-label="search" 
-            onClick={() => toggleSearchDrawer(true)}
+    <header className="border-b border-gray-600 bg-[#1E2A44]">
+      <div className="w-full px-4 sm:px-8 py-4 flex items-center justify-between">
+        {/* Logo and Brand */}
+        <div className={`${isSearchOpen && isMobile ? "hidden" : "block"}`}>
+          <Link to="/" className="flex flex-col">
+            <h1 className="text-lg sm:text-xl font-bold text-white">Finance Budget Tracker</h1>
+            <p className="text-xs sm:text-sm text-gray-400">Convenient bill payment automation.</p>
+          </Link>
+        </div>
+
+        {/* Right Icons */}
+        <div className={`flex items-center gap-2 ${isSearchOpen && isMobile ? "hidden" : "flex"}`}>
+          {/* Notification Bell */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-white hover:text-blue-500 hover:bg-gray-700"
           >
-            <SearchIcon />
-          </IconButton>
-        </Box>
-        
-        <IconButton size="large" aria-label="show notifications" color="inherit">
-          <Badge color="error">
-            <NotificationsIcon />
-          </Badge>
-        </IconButton>
-        
-        <IconButton size="large" aria-label="show messages" color="inherit">
-          <Badge color="error">
-            <MessageIcon />
-          </Badge>
-        </IconButton>
-      </Toolbar>
-      
-      {/* Mobile Search Drawer */}
-      <Drawer
-        anchor="top"
-        open={isSearchOpen}
-        onClose={() => toggleSearchDrawer(false)}
-      >
-        <Box sx={{ p: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6" sx={{ flexGrow: 1 }}>Search</Typography>
-            <IconButton onClick={() => toggleSearchDrawer(false)}>
-              <CloseIcon />
-            </IconButton>
-          </Box>
-          <Search>
-            <SearchIconWrapper>
-              <SearchIcon fontSize="small" />
-            </SearchIconWrapper>
-            <StyledInputBase
-              placeholder="Search"
-              inputProps={{ 'aria-label': 'search' }}
-              autoFocus
-              fullWidth
-            />
-          </Search>
-        </Box>
-      </Drawer>
-    </AppBar>
+            <Bell className="h-4 sm:h-5 w-4 sm:w-5" />
+            <span className="sr-only">Notifications</span>
+          </Button>
+
+          {/* User Profile */}
+          {isAuthenticated && user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="p-0 h-8 flex items-center gap-1 text-white hover:text-blue-500 hover:bg-gray-700"
+                >
+                  <Avatar className="h-6 sm:h-8 w-6 sm:w-8">
+                    <AvatarImage src={user.avatar || "/placeholder.svg?height=32&width=32"} alt={user.username} />
+                    <AvatarFallback className="bg-gray-700 text-white">
+                      {user.username ? user.username[0].toUpperCase() : "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <ChevronDown className="h-3 sm:h-4 w-3 sm:w-4 text-gray-400" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-[#1E2A44] border-gray-600 w-48 sm:w-56">
+                <DropdownMenuLabel className="text-white">
+                  {user.username || "My Account"}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-gray-600" />
+                <DropdownMenuItem
+                  className="text-gray-200 hover:bg-gray-700 hover:text-blue-500"
+                  asChild
+                >
+                  <Link to="/profile">Profile</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-gray-200 hover:bg-gray-700 hover:text-blue-500"
+                  asChild
+                >
+                  <Link to="/settings">Settings</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-gray-200 hover:bg-gray-700 hover:text-blue-500"
+                  asChild
+                >
+                  <Link to="/billing">Billing</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-gray-600" />
+                <DropdownMenuItem
+                  className="text-gray-200 hover:bg-gray-700 hover:text-blue-500"
+                  onClick={handleLogout}
+                >
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button
+              variant="ghost"
+              className="text-white hover:text-blue-500 hover:bg-gray-700 text-sm sm:text-base"
+              asChild
+            >
+              <Link to="/login">Sign In</Link>
+            </Button>
+          )}
+        </div>
+      </div>
+    </header>
   );
 }

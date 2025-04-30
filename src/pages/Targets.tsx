@@ -3,17 +3,15 @@ import { useFinance } from '../contexts/FinanceContext';
 import { Target } from '../types';
 
 const Targets: React.FC = () => {
-  const { targets, transactions, addTarget, updateTarget, deleteTarget } = useFinance();
+  const { targets, transactions, summary, addTarget, updateTarget, deleteTarget } = useFinance();
   const [showForm, setShowForm] = useState(false);
   const [editingTarget, setEditingTarget] = useState<Target | null>(null);
 
-  // Form state
   const [newTarget, setNewTarget] = useState<Omit<Target, 'id'>>({
     name: '',
     amount: 0
   });
 
-  // Function to open the add target form and reset state
   const openAddTargetForm = () => {
     setEditingTarget(null);
     setNewTarget({ 
@@ -37,41 +35,36 @@ const Targets: React.FC = () => {
       return transactions
         .filter(t => t.type === 'expense')
         .reduce((sum, t) => sum + t.amount, 0);
+    } else if (targetName === 'Total Balance') {
+      // Use available balance from summary (total income - total expenses)
+      return Number(summary?.totalIncome || 0) - Number(summary?.totalExpenses || 0);
     }
     return 0;
   };
 
-  // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-
     setNewTarget(prev => ({
       ...prev,
       [name]: name === 'amount' ? parseFloat(value) : value
     }));
   };
 
-  // Handle form submission for new target
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
     if (editingTarget) {
       updateTarget(editingTarget.id, newTarget);
     } else {
       addTarget(newTarget);
     }
-
-    // Reset form
     setNewTarget({
       name: '',
       amount: 0
     });
-
     setEditingTarget(null);
     setShowForm(false);
   };
 
-  // Start editing a target
   const handleEdit = (target: Target) => {
     setEditingTarget(target);
     setNewTarget({
@@ -81,7 +74,6 @@ const Targets: React.FC = () => {
     setShowForm(true);
   };
 
-  // Function to handle the cancel button click
   const handleCancel = () => {
     setShowForm(false);
     setEditingTarget(null);
@@ -91,22 +83,18 @@ const Targets: React.FC = () => {
     });
   };
 
-  // Calculate progress percentage for a target
   const calculateProgress = (target: Target) => {
     const currentValue = calculateCurrentValue(target.name);
     return (currentValue / target.amount) * 100;
   };
 
-  // Check if a target is exceeded
   const isTargetExceeded = (target: Target) => {
     const currentValue = calculateCurrentValue(target.name);
     return currentValue > target.amount;
   };
 
-  // Get status of a target
   const getTargetStatus = (target: Target) => {
     const progress = calculateProgress(target);
-
     if (progress >= 100) {
       return {
         label: 'Exceeded',
@@ -146,13 +134,11 @@ const Targets: React.FC = () => {
         </button>
       </div>
 
-      {/* Target Entry Form */} 
       {showForm && (
         <div className="card mb-4 sm:mb-6">
           <h2 className="text-lg font-semibold mb-4">
             {editingTarget ? 'Edit Target' : 'Add New Target'}
           </h2>
-
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
@@ -164,12 +150,11 @@ const Targets: React.FC = () => {
                   name="name"
                   value={newTarget.name}
                   onChange={handleInputChange}
-                  placeholder="e.g., Interest Earnings, Monthly Expenses"
+                  placeholder="e.g., Interest Earnings, Monthly Expenses, Total Balance"
                   className="input bg-gray-800 text-white border border-gray-600 w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">
                   Target Amount ($)
@@ -187,7 +172,6 @@ const Targets: React.FC = () => {
                 />
               </div>
             </div>
-
             <div className="flex justify-end">
               {editingTarget && (
                 <button
@@ -206,7 +190,6 @@ const Targets: React.FC = () => {
         </div>
       )}
 
-      {/* Target explanation card */}
       <div className="card bg-gradient-to-r from-blue-500/10 to-purple-500/10 mb-4 sm:mb-6">
         <div className="flex flex-col sm:flex-row items-center sm:items-start">
           <div className="bg-blue-500 bg-opacity-20 rounded-lg p-2 mb-4 sm:mb-0 sm:mr-4">
@@ -218,13 +201,12 @@ const Targets: React.FC = () => {
             <h3 className="font-semibold mb-1 text-center sm:text-left">About Financial Targets</h3>
             <p className="text-sm text-gray-400">
               Set targets for your finances to help manage your money. You'll receive warnings when approaching or exceeding these targets.
-              For example, set a $1000 interest target to avoid tax implications.
+              For example, set a $6000 balance target to track against your total balance.
             </p>
           </div>
         </div>
       </div>
 
-      {/* Targets Grid */}
       {targets.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
           {targets.map(target => {
@@ -241,7 +223,6 @@ const Targets: React.FC = () => {
                       Target: ${target.amount.toLocaleString()}
                     </p>
                   </div>
-
                   <div className="flex space-x-2">
                     <button
                       onClick={() => handleEdit(target)}
@@ -251,7 +232,6 @@ const Targets: React.FC = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                       </svg>
                     </button>
-
                     <button
                       onClick={() => deleteTarget(target.id)}
                       className="text-gray-400 hover:text-red-500 transition-colors"
@@ -262,7 +242,6 @@ const Targets: React.FC = () => {
                     </button>
                   </div>
                 </div>
-
                 <div className="mt-4">
                   <div className="flex justify-between items-center mb-1">
                     <span className="text-xs sm:text-sm font-medium">Progress ({progress.toFixed(1)}%)</span>
@@ -275,7 +254,6 @@ const Targets: React.FC = () => {
                     ></div>
                   </div>
                 </div>
-
                 <div className="mt-4 flex justify-between items-center">
                   <div>
                     <span className="text-xs sm:text-sm text-gray-400">Current</span>
@@ -283,7 +261,6 @@ const Targets: React.FC = () => {
                       ${currentValue.toLocaleString()}
                     </p>
                   </div>
-
                   <div className="text-right">
                     <span className="text-xs sm:text-sm text-gray-400">Remaining</span>
                     <p className="font-semibold text-sm sm:text-base">
