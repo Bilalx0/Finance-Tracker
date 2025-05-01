@@ -8,12 +8,10 @@
 
     /* Bundler mode */
     "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "moduleDetection": "force",
-
-    /* Required for project references */
-    "composite": true,
-    "noEmit": false,
+    "noEmit": true,
 
     /* Linting */
     "strict": false,
