@@ -6,12 +6,15 @@
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
+
     "moduleResolution": "bundler",
     "isolatedModules": true,
     "moduleDetection": "force",
     "jsx": "react-jsx",
+
     "composite": true,
     "noEmit": false,
+
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
