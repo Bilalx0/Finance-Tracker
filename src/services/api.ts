@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { Transaction, Target, AuthUser, DashboardSummary, Notification } from '../types';
 
-const API_URL = import.meta.env.VITE_APP_URL || 'finance-tracker-backend-production-ee93.up.railway.app';
+const API_URL = import.meta.env.VITE_APP_URL || 'http://localhost:5000/api';
 
 const createApiClient = (): AxiosInstance => {
   const config: AxiosRequestConfig = {

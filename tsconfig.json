@@ -4,7 +4,6 @@
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }
   ],
-
   "compilerOptions": {
     "noEmit": false,
     "checkJs": false,
@@ -12,13 +11,11 @@
     "skipLibCheck": true,
     "strict": false,
     "noImplicitAny": false,
-    "suppressImplicitAnyIndexErrors": true
-  },
-
-  "baseUrl": ".",
+    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
-    },
+    }
+  },
   "include": ["src"],
   "exclude": ["node_modules"]
 }
