@@ -33,7 +33,7 @@ const NotificationsPage = () => {
           <button
             onClick={handleClearRead}
             className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 disabled:bg-red-300"
-            disabled={!notifications.some((n) => n.isRead)} // Fixed
+            disabled={!notifications.some((n) => n.isRead)}
           >
             Clear Read Notifications
           </button>
@@ -50,18 +50,20 @@ const NotificationsPage = () => {
                 key={notification.id}
                 className={`border-l-4 p-4 rounded-lg shadow ${getNotificationStyle(
                   notification.type
-                )} ${notification.isRead ? 'opacity-75' : ''}`} // Fixed
+                )} ${notification.isRead ? 'opacity-75' : ''}`}
               >
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="font-medium">{notification.message}</p>
                     <p className="text-sm text-gray-600 mt-1">
-                      {new Date(notification.createdAt).toLocaleString()}
+                      {notification.createdAt
+                        ? new Date(notification.createdAt).toLocaleString()
+                        : 'Date not available'}
                     </p>
                   </div>
-                  {!notification.isRead && (
+                  {!notification.isRead && notification.id && (
                     <button
-                      onClick={() => handleMarkAsRead(notification.id)} // Type-safe
+                      onClick={() => handleMarkAsRead(notification.id as string)}
                       className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm"
                     >
                       Mark as Read

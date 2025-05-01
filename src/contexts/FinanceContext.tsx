@@ -424,25 +424,25 @@ export const FinanceProvider: React.FC<FinanceProviderProps> = ({ children }) =>
       if (!target.targetAmount || !['income', 'expense'].includes(target.type)) {
         throw new Error('Invalid target: amount and valid type are required');
       }
-
+  
       const targetPayload = {
         category: target.category,
         type: target.type,
         targetAmount: Number(target.targetAmount),
       };
-
+  
       const newTarget = await TargetAPI.create(targetPayload);
       const updatedTargets = [...targets, newTarget].filter(
         (t) => t.targetAmount > 0 && ['income', 'expense'].includes(t.type)
       );
       setTargets(updatedTargets);
-
+  
       const monthKey = `${currentYear}-${new Date(Date.parse(`${currentMonth} 1, ${currentYear}`)).getMonth() + 1}`;
       setMonthlyData((prev) => ({
         ...prev,
         [monthKey]: { ...prev[monthKey], targets: updatedTargets },
       }));
-
+  
       checkTargets(transactions, updatedTargets);
     } catch (err) {
       setError('Failed to add target');
@@ -452,31 +452,36 @@ export const FinanceProvider: React.FC<FinanceProviderProps> = ({ children }) =>
       setLoading(false);
     }
   };
-
+  
   const updateTarget = async (id: string, target: Partial<Target>) => {
     try {
       setLoading(true);
+      // Add type guards
+      if (!target.category || !target.type || target.targetAmount === undefined) {
+        throw new Error('Category, type, and target amount are required');
+      }
+      if (!['income', 'expense'].includes(target.type)) {
+        throw new Error('Invalid target type');
+      }
+  
       const targetPayload = {
         category: target.category,
         type: target.type,
         targetAmount: Number(target.targetAmount),
       };
-      if (!targetPayload.targetAmount || !['income', 'expense'].includes(targetPayload.type)) {
-        throw new Error('Invalid target: amount and valid type are required');
-      }
-
+  
       const updatedTarget = await TargetAPI.update(id, targetPayload);
       const updatedTargets = targets
         .map((t) => (t.id === id ? updatedTarget : t))
         .filter((t) => t.targetAmount > 0 && ['income', 'expense'].includes(t.type));
       setTargets(updatedTargets);
-
+  
       const monthKey = `${currentYear}-${new Date(Date.parse(`${currentMonth} 1, ${currentYear}`)).getMonth() + 1}`;
       setMonthlyData((prev) => ({
         ...prev,
         [monthKey]: { ...prev[monthKey], targets: updatedTargets },
       }));
-
+  
       checkTargets(transactions, updatedTargets);
     } catch (err) {
       setError('Failed to update target');
@@ -510,19 +515,20 @@ export const FinanceProvider: React.FC<FinanceProviderProps> = ({ children }) =>
     }
   };
 
-  const markNotificationAsRead = async (id: string | number) => {
-    try {
-      const updatedNotification = await NotificationAPI.markAsRead(id);
-      setNotifications((prev) =>
-        prev.map((notification) =>
-          notification.id === id ? { ...notification, isRead: updatedNotification.isRead } : notification
-        )
-      );
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-      setError('Failed to mark notification as read');
-    }
-  };
+
+const markNotificationAsRead = async (id: string | number) => {
+  try {
+    const updatedNotification = await NotificationAPI.markAsRead(id);
+    setNotifications((prev) =>
+      prev.map((notification) =>
+        notification.id === id ? { ...notification, isRead: updatedNotification.isRead } : notification
+      )
+    );
+  } catch (error) {
+    console.error('Error marking notification as read:', error);
+    setError('Failed to mark notification as read');
+  }
+};
 
   const deleteNotification = async (id: string | number) => {
     try {

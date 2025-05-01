@@ -312,10 +312,9 @@ const Targets: React.FC = () => {
                     </span>
                   </div>
                   <Progress
-                    value={progress}
-                    className="h-2 bg-gray-700"
-                    indicatorClassName={status.bgColor}
-                  />
+  value={progress}
+  className={`h-2 bg-gray-700 ${status.bgColor}`}
+/>
                 </div>
                 <div className="mt-4 flex justify-between items-center">
                   <div>

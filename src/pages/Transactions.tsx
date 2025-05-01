@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useFinance } from '../contexts/FinanceContext';
 import { ExpenseCategories, IncomeCategories, Transaction } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 
 const Transactions: React.FC = () => {
   const { transactions, addTransaction, deleteTransaction } = useFinance();
+  const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [sortBy, setSortBy] = useState<'date' | 'amount'>('date');
@@ -77,7 +79,7 @@ const Transactions: React.FC = () => {
     try {
       await addTransaction({
         ...newTransaction,
-        userId: user.id, // Add userId
+        userId: user.id , // Add userId
         amount: Number(newTransaction.amount),
         month: transactionMonth,
         year: transactionYear,
