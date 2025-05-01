@@ -133,10 +133,10 @@ export const AuthAPI = {
 
   login: async (email: string, password: string): Promise<AuthUser> => {
     try {
-      console.log('Logging in with payload:", { email, password: "****" });
+      console.log('Logging in with payload:', { email, password: '****' });
       const response = await apiClient.post('/login', { email, password });
       console.log('Login response:', response.data);
-
+  
       if (response.data.accessToken && response.data.user) {
         console.log('Saving to localStorage:', {
           accessToken: response.data.accessToken.slice(0, 10) + '...',
