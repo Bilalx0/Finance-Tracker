@@ -301,18 +301,20 @@ export const FinanceProvider: React.FC<FinanceProviderProps> = ({ children }) =>
       setLoading(true);
       if (transaction.amount <= 0) throw new Error('Transaction amount must be greater than 0');
       if (!['income', 'expense'].includes(transaction.type)) throw new Error('Invalid transaction type');
-
+      if (!user || !user.id) throw new Error('User ID is required'); // Add type guard
+  
       const transactionDate = new Date(transaction.date);
       const transactionMonth = transactionDate.getMonth();
       const transactionYear = transactionDate.getFullYear();
-
+  
       const newTransactionPayload = {
         ...transaction,
+        userId: user.id, // Now guaranteed to be string
         amount: Number(transaction.amount),
         month: transactionMonth,
         year: transactionYear,
       };
-
+  
       const newTransaction = await TransactionAPI.create(newTransactionPayload);
 
       const monthKey = `${transactionYear}-${transactionMonth + 1}`;

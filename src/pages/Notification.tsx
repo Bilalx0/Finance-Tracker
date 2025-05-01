@@ -1,4 +1,3 @@
-import React from 'react';
 import { useFinance } from '../contexts/FinanceContext';
 import { Notification } from '../types';
 
@@ -34,7 +33,7 @@ const NotificationsPage = () => {
           <button
             onClick={handleClearRead}
             className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 disabled:bg-red-300"
-            disabled={!notifications.some((n) => n.read)}
+            disabled={!notifications.some((n) => n.isRead)} // Fixed
           >
             Clear Read Notifications
           </button>
@@ -51,7 +50,7 @@ const NotificationsPage = () => {
                 key={notification.id}
                 className={`border-l-4 p-4 rounded-lg shadow ${getNotificationStyle(
                   notification.type
-                )} ${notification.read ? 'opacity-75' : ''}`}
+                )} ${notification.isRead ? 'opacity-75' : ''}`} // Fixed
               >
                 <div className="flex justify-between items-start">
                   <div>
@@ -60,9 +59,9 @@ const NotificationsPage = () => {
                       {new Date(notification.createdAt).toLocaleString()}
                     </p>
                   </div>
-                  {!notification.read && (
+                  {!notification.isRead && (
                     <button
-                      onClick={() => handleMarkAsRead(notification.id)}
+                      onClick={() => handleMarkAsRead(notification.id)} // Type-safe
                       className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm"
                     >
                       Mark as Read

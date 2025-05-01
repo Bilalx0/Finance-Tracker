@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
-import { Transaction, Target, AuthUser, DashboardSummary } from '../types';
+import { Transaction, Target, AuthUser, DashboardSummary, Notification } from '../types';
 
 // Interface to handle API response structure
 interface ApiResponse<T> {
@@ -73,33 +73,33 @@ const createApiClient = (): AxiosInstance => {
 
 export const apiClient = createApiClient();
 
-interface ApiResponse<T> {
-  data?: T;
-}
-
 export const apiHelpers = {
   get: async <T>(url: string, params?: any): Promise<T> => {
     console.log('GET request:', url, 'Params:', params);
     const response = await apiClient.get<ApiResponse<T>>(url, { params });
-    return (response.data.data ?? response.data) as T; // Type assertion
+    return (response.data.data ?? response.data) as T;
   },
   post: async <T>(url: string, data?: any): Promise<T> => {
     console.log('POST request:', url, 'Data:', data);
     const response = await apiClient.post<ApiResponse<T>>(url, data);
-    return (response.data.data ?? response.data) as T; // Type assertion
+    return (response.data.data ?? response.data) as T;
   },
   put: async <T>(url: string, data?: any): Promise<T> => {
     console.log('PUT request:', url, 'Data:', data);
     const response = await apiClient.put<ApiResponse<T>>(url, data);
-    return (response.data.data ?? response.data) as T; // Type assertion
+    return (response.data.data ?? response.data) as T;
   },
   delete: async <T>(url: string): Promise<T> => {
     console.log('DELETE request:', url);
     const response = await apiClient.delete<ApiResponse<T>>(url);
-    return (response.data.data ?? response.data) as T; // Type assertion
+    return (response.data.data ?? response.data) as T;
+  },
+  patch: async <T>(url: string, data?: any): Promise<T> => {
+    console.log('PATCH request:', url, 'Data:', data);
+    const response = await apiClient.patch<ApiResponse<T>>(url, data);
+    return (response.data.data ?? response.data) as T;
   },
 };
-
 
 export const AuthAPI = {
   register: async (username: string, email: string, password: string, avatar: File): Promise<AuthUser> => {
@@ -141,7 +141,7 @@ export const AuthAPI = {
       console.log('Logging in with payload:', { email, password: '****' });
       const response = await apiClient.post('/login', { email, password });
       console.log('Login response:', response.data);
-  
+
       if (response.data.accessToken && response.data.user) {
         console.log('Saving to localStorage:', {
           accessToken: response.data.accessToken.slice(0, 10) + '...',
@@ -319,5 +319,24 @@ export const MonthlyDataAPI = {
       console.error('Get available months error:', error);
       throw error;
     }
+  },
+};
+
+export const NotificationAPI = {
+  getAll: async (): Promise<Notification[]> => {
+    return apiHelpers.get<Notification[]>('/notifications');
+  },
+  create: async (notification: Omit<Notification, 'id' | 'userId' | 'createdAt' | 'isRead'>): Promise<Notification> => {
+    return apiHelpers.post<Notification>('/notifications', notification);
+  },
+  delete: async (id: string): Promise<void> => {
+    return apiHelpers.delete(`/notifications/${id}`);
+  },
+  deleteRead: async (): Promise<void> => {
+    return apiHelpers.delete('/notifications/read');
+  },
+  markAsRead: async (id: string): Promise<Notification> => {
+    const response = await apiHelpers.patch<Notification>(`/notifications/${id}/read`, { isRead: true });
+    return response;
   },
 };

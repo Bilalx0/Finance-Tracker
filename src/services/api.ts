@@ -93,6 +93,11 @@ export const apiHelpers = {
     const response = await apiClient.delete<ApiResponse<T>>(url);
     return (response.data.data ?? response.data) as T; // Type assertion
   },
+  patch: async <T>(url: string, data?: any): Promise<T> => {
+      console.log('PATCH request:', url, 'Data:', data);
+      const response = await apiClient.patch<ApiResponse<T>>(url, data);
+      return (response.data.data ?? response.data) as T;
+    },
 };
 
 
@@ -333,6 +338,15 @@ export const NotificationAPI = {
       return apiHelpers.post<Notification>('/notifications', notification);
     } catch (error) {
       console.error('Create notification error:', error);
+      throw error;
+    }
+  },
+
+  markAsRead: async (id: string | number): Promise<Notification> => {
+    try {
+      return apiHelpers.patch<Notification>(`/notifications/${id}/read`, {});
+    } catch (error) {
+      console.error('Mark notification as read error:', error);
       throw error;
     }
   },

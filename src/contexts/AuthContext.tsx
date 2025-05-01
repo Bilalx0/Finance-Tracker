@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { AuthState, AuthUser } from '../types';
 import { AuthAPI } from '../services/api';
+import { apiClient } from '../services/apiConfig';
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
@@ -172,6 +173,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const uploadAvatar = async (file: File): Promise<AuthUser> => {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }));
+      const formData = new FormData(); // Create formData
+      formData.append('avatar', file); // Use file
       const response = await apiClient.post('/upload-avatar', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
