@@ -78,7 +78,7 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
       category: transaction.category,
       date: transaction.date,
       description: transaction.description,
-      userId: user?.id,
+      userId: user?.id ?? '',
       month: transactionMonthIndex,
       year: transactionYear
     });
