@@ -28,6 +28,8 @@ interface AuthProviderProps {
 
 const USER_KEY = 'financeTrackerUser';
 const TOKEN_KEY = 'financeTrackerToken';
+const SUMMARY_STORAGE_KEY = 'financeTrackerSummary'; // Add this
+const MONTHLY_DATA_STORAGE_KEY = 'financeTrackerMonthlyData'; // Add this
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [state, setState] = useState<AuthState>({
@@ -122,6 +124,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const signup = async (username: string, email: string, password: string, avatar: File) => {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }));
+      localStorage.removeItem(SUMMARY_STORAGE_KEY); // Clear old summary
+      localStorage.removeItem(MONTHLY_DATA_STORAGE_KEY); // Clear old monthly data
       const user = await AuthAPI.register(username, email, password, avatar);
       console.log('Signup successful, user:', user);
       if (!user.avatar) {
@@ -151,6 +155,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('Logout successful, clearing state');
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
+      localStorage.removeItem(SUMMARY_STORAGE_KEY); // Clear summary
+      localStorage.removeItem(MONTHLY_DATA_STORAGE_KEY); // Clear monthly data
       setState({
         user: null,
         isAuthenticated: false,
@@ -161,6 +167,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error('Logout error:', err.response?.data || err.message);
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
+      localStorage.removeItem(SUMMARY_STORAGE_KEY);
+      localStorage.removeItem(MONTHLY_DATA_STORAGE_KEY);
       setState({
         user: null,
         isAuthenticated: false,
