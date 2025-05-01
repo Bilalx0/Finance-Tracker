@@ -68,26 +68,30 @@ const createApiClient = (): AxiosInstance => {
 
 export const apiClient = createApiClient();
 
+interface ApiResponse<T> {
+  data?: T;
+}
+
 export const apiHelpers = {
   get: async <T>(url: string, params?: any): Promise<T> => {
     console.log('GET request:', url, 'Params:', params);
-    const response = await apiClient.get<T>(url, { params });
-    return response.data.data || response.data;
+    const response = await apiClient.get<ApiResponse<T>>(url, { params });
+    return (response.data.data ?? response.data) as T; // Type assertion
   },
   post: async <T>(url: string, data?: any): Promise<T> => {
     console.log('POST request:', url, 'Data:', data);
-    const response = await apiClient.post<T>(url, data);
-    return response.data.data || response.data;
+    const response = await apiClient.post<ApiResponse<T>>(url, data);
+    return (response.data.data ?? response.data) as T; // Type assertion
   },
   put: async <T>(url: string, data?: any): Promise<T> => {
     console.log('PUT request:', url, 'Data:', data);
-    const response = await apiClient.put<T>(url, data);
-    return response.data.data || response.data;
+    const response = await apiClient.put<ApiResponse<T>>(url, data);
+    return (response.data.data ?? response.data) as T; // Type assertion
   },
   delete: async <T>(url: string): Promise<T> => {
     console.log('DELETE request:', url);
-    const response = await apiClient.delete<T>(url);
-    return response.data;
+    const response = await apiClient.delete<ApiResponse<T>>(url);
+    return (response.data.data ?? response.data) as T; // Type assertion
   },
 };
 
@@ -329,15 +333,6 @@ export const NotificationAPI = {
       return apiHelpers.post<Notification>('/notifications', notification);
     } catch (error) {
       console.error('Create notification error:', error);
-      throw error;
-    }
-  },
-
-  markAsRead: async (id: string | number): Promise<Notification> => {
-    try {
-      return apiHelpers.patch<Notification>(`/notifications/${id}/read`, {});
-    } catch (error) {
-      console.error('Mark notification as read error:', error);
       throw error;
     }
   },
