@@ -60,6 +60,11 @@ const Transactions: React.FC = () => {
       return;
     }
 
+    if (!user || !user.id) {
+      alert('User not authenticated');
+      return;
+    }
+
     const transactionDate = new Date(newTransaction.date);
     if (isNaN(transactionDate.getTime())) {
       alert('Invalid date');
@@ -72,6 +77,7 @@ const Transactions: React.FC = () => {
     try {
       await addTransaction({
         ...newTransaction,
+        userId: user.id, // Add userId
         amount: Number(newTransaction.amount),
         month: transactionMonth,
         year: transactionYear,

@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { useFinance } from "../contexts/FinanceContext";
 import { useAuth } from "../contexts/AuthContext";
-import { Progress } from "@/components/ui/progress";
+import { Progress } from "../components/ui/progress";
 import { Target, IncomeCategories, ExpenseCategories } from "../types";
 
 const Targets: React.FC = () => {
-  const { targets, addTarget, updateTarget, deleteTarget, currentMonth, currentYear } = useFinance();
+  const { targets, addTarget, updateTarget, deleteTarget} = useFinance();
   const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [editingTarget, setEditingTarget] = useState<Target | null>(null);

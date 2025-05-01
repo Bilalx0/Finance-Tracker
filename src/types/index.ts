@@ -85,7 +85,7 @@ export const ExpenseCategories: Record<string, string> = {
 };
 
 export interface Notification {
-  id: string | number;
+  id: string;
   title: string;
   message: string;
   type: 'info' | 'success' | 'warning' | 'error';
