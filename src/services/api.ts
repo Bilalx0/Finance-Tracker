@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { Transaction, Target, AuthUser, DashboardSummary, Notification } from '../types';
 
-const API_URL = import.meta.env.VITE_APP_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_APP_URL || 'https://financebackendtrackingmanove.onrender.com/api';
 
 const createApiClient = (): AxiosInstance => {
   const config: AxiosRequestConfig = {
