@@ -57,7 +57,7 @@ function Balance() {
                 </div>
                 <div className="flex justify-between items-center gap-4 mt-4">
                     <span className="text-2xl sm:text-3xl font-bold text-white">
-                        USD {(balanceValue || 0).toLocaleString()}
+                        GBP {(balanceValue || 0).toLocaleString()}
                     </span>
                     <div className="mr-0 sm:mr-5">
                         <Coins className="h-12 w-12 sm:h-16 sm:w-16 text-yellow-500" />
