@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { Transaction, Target, AuthUser, DashboardSummary, Notification } from '../types';
 
-const API_URL = 'https://finance-tracker-backend-production-ee93.up.railway.app/api';
+const API_URL = 'https://finance-tracker-backend-production-ef5d.up.railway.app/api';
 
 const createApiClient = (): AxiosInstance => {
   const config: AxiosRequestConfig = {

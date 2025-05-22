@@ -6,7 +6,7 @@ interface ApiResponse<T> {
   data?: T;
 }
 
-const API_URL = import.meta.env.VITE_APP_URL || 'http://localhost:5000/api';
+const API_URL = 'http://localhost:5000/api';
 
 const createApiClient = (): AxiosInstance => {
   const config: AxiosRequestConfig = {
